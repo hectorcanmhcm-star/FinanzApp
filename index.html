@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanzApp Ultra - Gestión Total</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .card-neo { background: white; border-radius: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; }
+        .hidden { display: none; }
+        .modal-bg { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); }
+        .tab-active { color: #4f46e5; border-bottom: 2px solid #4f46e5; }
+    </style>
+</head>
+<body class="pb-28">
+
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">FinanzApp Pro</h1>
+                <p id="current-date" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"></p>
+            </div>
+            <div id="sync-status" class="text-[10px] bg-slate-100 px-3 py-1 rounded-full font-bold text-slate-500">
+                <i class="fas fa-database mr-1"></i> LocalStorage
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4 space-y-6">
+        
+        <!-- DASHBOARD RESUMEN GLOBAL -->
+        <section id="sec-dashboard" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="card-neo p-6 border-l-4 border-emerald-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase">Ingresos Totales</p>
+                    <h2 id="total-incomes" class="text-2xl font-bold text-slate-800">$0.00</h2>
+                </div>
+                <div class="card-neo p-6 border-l-4 border-rose-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase">Pagos Realizados</p>
+                    <h2 id="total-payments-made" class="text-2xl font-bold text-rose-600">$0.00</h2>
+                </div>
+                <div class="card-neo p-6 border-l-4 border-indigo-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase">Capital Remanente</p>
+                    <h2 id="capital-free" class="text-2xl font-bold text-indigo-600">$0.00</h2>
+                </div>
+            </div>
+
+            <div class="bg-indigo-900 rounded-[2rem] p-6 text-white shadow-2xl overflow-hidden relative">
+                <div class="relative z-10">
+                    <p class="opacity-70 text-sm">Deuda Total Acumulada (Todas las tarjetas)</p>
+                    <h3 id="global-debt" class="text-3xl font-bold mt-1">$0.00</h3>
+                    <div class="mt-4 flex gap-4 text-xs">
+                        <span class="bg-white/20 px-3 py-1 rounded-full" id="global-to-pay-month">Requerido este mes: $0.00</span>
+                    </div>
+                </div>
+                <i class="fas fa-chart-line absolute -right-4 -bottom-4 text-8xl opacity-10"></i>
+            </div>
+        </section>
+
+        <!-- SECCIÓN TARJETAS Y SUS DETALLES -->
+        <section id="sec-cards" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Mis Tarjetas</h2>
+                <button onclick="openModal('modal-card')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 hover:scale-105 transition">
+                    + Nueva Tarjeta
+                </button>
+            </div>
+            <div id="cards-container" class="grid grid-cols-1 gap-6">
+                <!-- Se inyectan tarjetas con su lista de gastos -->
+            </div>
+        </section>
+
+        <!-- SECCIÓN HISTORIAL DE PAGOS -->
+        <section id="sec-history" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Historial de Pagos</h2>
+                <button onclick="openModal('modal-payment')" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-rose-200">
+                    Registrar Abono
+                </button>
+            </div>
+            <div class="card-neo overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="p-4 font-bold">Fecha</th>
+                            <th class="p-4 font-bold">Tarjeta</th>
+                            <th class="p-4 font-bold text-right">Monto</th>
+                            <th class="p-4 font-bold text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <!-- Filas de historial -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN INGRESOS -->
+        <section id="sec-incomes" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Fuentes de Ingreso</h2>
+                <button onclick="openModal('modal-income')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold">
+                    + Añadir Ingreso
+                </button>
+            </div>
+            <div id="incomes-list" class="grid grid-cols-1 gap-3"></div>
+        </section>
+
+    </main>
+
+    <!-- NAVEGACIÓN INFERIOR -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-4 pb-6 z-40">
+        <div class="max-w-md mx-auto flex justify-between items-center px-4">
+            <button onclick="showSection('dashboard')" class="nav-link flex flex-col items-center gap-1 text-indigo-600" id="nav-dashboard">
+                <i class="fas fa-house-chimney text-xl"></i><span class="text-[10px] font-bold uppercase">Inicio</span>
+            </button>
+            <button onclick="showSection('cards')" class="nav-link flex flex-col items-center gap-1 text-slate-400" id="nav-cards">
+                <i class="fas fa-credit-card text-xl"></i><span class="text-[10px] font-bold uppercase">Tarjetas</span>
+            </button>
+            <button onclick="showSection('history')" class="nav-link flex flex-col items-center gap-1 text-slate-400" id="nav-history">
+                <i class="fas fa-clock-rotate-left text-xl"></i><span class="text-[10px] font-bold uppercase">Pagos</span>
+            </button>
+            <button onclick="showSection('incomes')" class="nav-link flex flex-col items-center gap-1 text-slate-400" id="nav-incomes">
+                <i class="fas fa-sack-dollar text-xl"></i><span class="text-[10px] font-bold uppercase">Ingresos</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODALES (Ocultos por defecto) -->
+    
+    <!-- Modal Tarjeta -->
+    <div id="modal-card" class="fixed inset-0 modal-bg hidden items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6" id="card-modal-title">Nueva Tarjeta</h3>
+            <input type="hidden" id="edit-card-id">
+            <div class="space-y-4">
+                <input type="text" id="card-name" placeholder="Nombre (ej. Oro)" class="w-full p-4 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="text" id="card-bank" placeholder="Banco (ej. Amex)" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="card-cut" placeholder="Día Corte" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                    <input type="number" id="card-limit" placeholder="Día Pago" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                </div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="saveCard()" class="flex-1 bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg">Guardar</button>
+                    <button onclick="closeModal('modal-card')" class="px-6 text-slate-400 font-bold">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gasto (Compra) -->
+    <div id="modal-expense" class="fixed inset-0 modal-bg hidden items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Registrar Compra</h3>
+            <input type="hidden" id="exp-card-id">
+            <input type="hidden" id="edit-exp-id">
+            <div class="space-y-4">
+                <input type="text" id="exp-desc" placeholder="Descripción" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                <input type="number" id="exp-amount" placeholder="Monto" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                <select id="exp-type" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none" onchange="toggleMsi()">
+                    <option value="contado">Contado / Una cuota</option>
+                    <option value="msi">Meses (MSI / Intereses)</option>
+                </select>
+                <div id="box-msi" class="hidden grid grid-cols-2 gap-4">
+                    <input type="number" id="exp-months" placeholder="Meses" class="p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                    <input type="number" id="exp-interest" placeholder="Interés %" class="p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                </div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="saveExpense()" class="flex-1 bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg">Guardar</button>
+                    <button onclick="closeModal('modal-expense')" class="px-6 text-slate-400 font-bold">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pago (Abono) -->
+    <div id="modal-payment" class="fixed inset-0 modal-bg hidden items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Registrar Pago</h3>
+            <input type="hidden" id="edit-pay-id">
+            <div class="space-y-4">
+                <select id="pay-card-id" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none"></select>
+                <input type="date" id="pay-date" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                <input type="number" id="pay-amount" placeholder="Monto pagado" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                <div class="flex gap-2 pt-4">
+                    <button onclick="savePayment()" class="flex-1 bg-rose-500 text-white p-4 rounded-2xl font-bold shadow-lg">Registrar</button>
+                    <button onclick="closeModal('modal-payment')" class="px-6 text-slate-400 font-bold">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ingreso -->
+    <div id="modal-income" class="fixed inset-0 modal-bg hidden items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Fuente de Ingreso</h3>
+            <input type="hidden" id="edit-inc-id">
+            <div class="space-y-4">
+                <input type="text" id="inc-concept" placeholder="Concepto" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                <input type="number" id="inc-amount" placeholder="Monto mensual" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none">
+                <div class="flex gap-2 pt-4">
+                    <button onclick="saveIncome()" class="flex-1 bg-emerald-600 text-white p-4 rounded-2xl font-bold shadow-lg">Guardar</button>
+                    <button onclick="closeModal('modal-income')" class="px-6 text-slate-400 font-bold">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL
+        let state = {
+            cards: JSON.parse(localStorage.getItem('fapp_cards')) || [],
+            expenses: JSON.parse(localStorage.getItem('fapp_expenses')) || [],
+            payments: JSON.parse(localStorage.getItem('fapp_payments')) || [],
+            incomes: JSON.parse(localStorage.getItem('fapp_incomes')) || []
+        };
+
+        const fmt = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
+
+        // PERSISTENCIA Y RENDER
+        function save() {
+            localStorage.setItem('fapp_cards', JSON.stringify(state.cards));
+            localStorage.setItem('fapp_expenses', JSON.stringify(state.expenses));
+            localStorage.setItem('fapp_payments', JSON.stringify(state.payments));
+            localStorage.setItem('fapp_incomes', JSON.stringify(state.incomes));
+            render();
+        }
+
+        // NAVEGACIÓN
+        function showSection(id) {
+            ['dashboard', 'cards', 'history', 'incomes'].forEach(s => {
+                document.getElementById(`sec-${s}`).classList.toggle('hidden', s !== id);
+                const nav = document.getElementById(`nav-${s}`);
+                nav.classList.toggle('text-indigo-600', s === id);
+                nav.classList.toggle('text-slate-400', s !== id);
+            });
+        }
+
+        function openModal(id, editId = null) {
+            document.getElementById(id).classList.add('flex');
+            document.getElementById(id).classList.remove('hidden');
+            
+            // Lógica para poblar datos si es edición
+            if (id === 'modal-card' && editId) {
+                const card = state.cards.find(c => c.id === editId);
+                document.getElementById('edit-card-id').value = editId;
+                document.getElementById('card-name').value = card.name;
+                document.getElementById('card-bank').value = card.bank;
+                document.getElementById('card-cut').value = card.cut;
+                document.getElementById('card-limit').value = card.limit;
+            }
+            if (id === 'modal-payment') {
+                const select = document.getElementById('pay-card-id');
+                select.innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('flex');
+            document.getElementById(id).classList.add('hidden');
+            // Limpiar inputs
+            document.querySelectorAll(`#${id} input`).forEach(i => i.value = '');
+            document.getElementById('edit-card-id').value = '';
+            document.getElementById('edit-exp-id').value = '';
+            document.getElementById('edit-pay-id').value = '';
+            document.getElementById('edit-inc-id').value = '';
+        }
+
+        function toggleMsi() {
+            const type = document.getElementById('exp-type').value;
+            document.getElementById('box-msi').classList.toggle('hidden', type === 'contado');
+        }
+
+        // FUNCIONES DE GUARDADO (CREAR / EDITAR)
+        function saveCard() {
+            const id = document.getElementById('edit-card-id').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('card-name').value,
+                bank: document.getElementById('card-bank').value,
+                cut: document.getElementById('card-cut').value,
+                limit: document.getElementById('card-limit').value
+            };
+            if(id) state.cards = state.cards.map(c => c.id === data.id ? data : c);
+            else state.cards.push(data);
+            save(); closeModal('modal-card');
+        }
+
+        function saveExpense() {
+            const id = document.getElementById('edit-exp-id').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                cardId: parseInt(document.getElementById('exp-card-id').value),
+                desc: document.getElementById('exp-desc').value,
+                amount: parseFloat(document.getElementById('exp-amount').value),
+                type: document.getElementById('exp-type').value,
+                months: parseInt(document.getElementById('exp-months').value) || 1,
+                interest: parseFloat(document.getElementById('exp-interest').value) || 0
+            };
+            if(id) state.expenses = state.expenses.map(e => e.id === data.id ? data : e);
+            else state.expenses.push(data);
+            save(); closeModal('modal-expense');
+        }
+
+        function savePayment() {
+            const data = {
+                id: Date.now(),
+                cardId: parseInt(document.getElementById('pay-card-id').value),
+                date: document.getElementById('pay-date').value,
+                amount: parseFloat(document.getElementById('pay-amount').value)
+            };
+            state.payments.push(data);
+            save(); closeModal('modal-payment');
+        }
+
+        function saveIncome() {
+            const id = document.getElementById('edit-inc-id').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                concept: document.getElementById('inc-concept').value,
+                amount: parseFloat(document.getElementById('inc-amount').value)
+            };
+            if(id) state.incomes = state.incomes.map(i => i.id === data.id ? data : i);
+            else state.incomes.push(data);
+            save(); closeModal('modal-income');
+        }
+
+        function deleteItem(collection, id) {
+            if(confirm('¿Seguro que deseas eliminar esto?')) {
+                state[collection] = state[collection].filter(i => i.id !== id);
+                save();
+            }
+        }
+
+        function editExpense(expId) {
+            const exp = state.expenses.find(e => e.id === expId);
+            document.getElementById('edit-exp-id').value = exp.id;
+            document.getElementById('exp-card-id').value = exp.cardId;
+            document.getElementById('exp-desc').value = exp.desc;
+            document.getElementById('exp-amount').value = exp.amount;
+            document.getElementById('exp-type').value = exp.type;
+            document.getElementById('exp-months').value = exp.months;
+            document.getElementById('exp-interest').value = exp.interest;
+            toggleMsi();
+            openModal('modal-expense');
+        }
+
+        function editIncome(incId) {
+            const inc = state.incomes.find(i => i.id === incId);
+            document.getElementById('edit-inc-id').value = inc.id;
+            document.getElementById('inc-concept').value = inc.concept;
+            document.getElementById('inc-amount').value = inc.amount;
+            openModal('modal-income');
+        }
+
+        // CÁLCULOS
+        function getCardMetrics(cardId) {
+            const cardExpenses = state.expenses.filter(e => e.cardId === cardId);
+            let totalDebt = 0;
+            let monthPay = 0;
+
+            cardExpenses.forEach(e => {
+                if(e.type === 'contado') {
+                    totalDebt += e.amount;
+                    monthPay += e.amount;
+                } else {
+                    const total = e.amount * (1 + (e.interest / 100));
+                    totalDebt += total;
+                    monthPay += (total / e.months);
+                }
+            });
+            return { totalDebt, monthPay };
+        }
+
+        // RENDERIZADO DE VISTAS
+        function render() {
+            // 1. Dashboard
+            let sumIncomes = state.incomes.reduce((acc, i) => acc + i.amount, 0);
+            let sumPayments = state.payments.reduce((acc, p) => acc + p.amount, 0);
+            let globalDebt = 0;
+            let globalMonthly = 0;
+
+            state.cards.forEach(c => {
+                const m = getCardMetrics(c.id);
+                globalDebt += m.totalDebt;
+                globalMonthly += m.monthPay;
+            });
+
+            document.getElementById('total-incomes').innerText = fmt(sumIncomes);
+            document.getElementById('total-payments-made').innerText = fmt(sumPayments);
+            document.getElementById('capital-free').innerText = fmt(sumIncomes - sumPayments);
+            document.getElementById('global-debt').innerText = fmt(globalDebt);
+            document.getElementById('global-to-pay-month').innerText = `Requerido este mes: ${fmt(globalMonthly)}`;
+
+            // 2. Tarjetas y sus detalles de compras
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            state.cards.forEach(c => {
+                const m = getCardMetrics(c.id);
+                const cardExps = state.expenses.filter(e => e.cardId === c.id);
+                
+                container.innerHTML += `
+                    <div class="card-neo overflow-hidden">
+                        <div class="bg-slate-800 p-6 text-white flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold">${c.name}</h3>
+                                <p class="text-xs text-slate-400 uppercase font-bold tracking-widest">${c.bank} | Corte: ${c.cut}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openModal('modal-card', ${c.id})" class="bg-white/10 p-2 rounded-lg text-xs"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteItem('cards', ${c.id})" class="bg-rose-500/20 p-2 rounded-lg text-xs text-rose-300"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-50 grid grid-cols-2 gap-4 border-b">
+                            <div><p class="text-[10px] uppercase font-bold text-slate-400">Deuda Tarjeta</p><p class="font-bold">${fmt(m.totalDebt)}</p></div>
+                            <div class="text-right"><p class="text-[10px] uppercase font-bold text-slate-400">Pago Mes aprox</p><p class="font-bold text-indigo-600">${fmt(m.monthPay)}</p></div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-xs font-bold uppercase text-slate-500">Compras registradas</h4>
+                                <button onclick="document.getElementById('exp-card-id').value=${c.id}; openModal('modal-expense');" class="text-indigo-600 text-xs font-bold">+ Agregar Compra</button>
+                            </div>
+                            <div class="space-y-2">
+                                ${cardExps.length === 0 ? '<p class="text-xs text-slate-400 italic">No hay compras en esta tarjeta</p>' : ''}
+                                ${cardExps.map(e => `
+                                    <div class="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg">
+                                        <div class="flex flex-col">
+                                            <span class="font-semibold">${e.desc}</span>
+                                            <span class="text-[10px] text-slate-400">${e.type === 'msi' ? `${e.months} meses` : 'Contado'}</span>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <span class="font-bold">${fmt(e.amount)}</span>
+                                            <button onclick="editExpense(${e.id})" class="text-slate-300 hover:text-indigo-500"><i class="fas fa-pen text-xs"></i></button>
+                                            <button onclick="deleteItem('expenses', ${e.id})" class="text-slate-300 hover:text-rose-500"><i class="fas fa-trash text-xs"></i></button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 3. Historial de Pagos
+            const histBody = document.getElementById('history-table-body');
+            histBody.innerHTML = state.payments.length === 0 ? '<tr><td colspan="4" class="p-4 text-center text-slate-400">No hay pagos registrados</td></tr>' : '';
+            state.payments.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(p => {
+                const card = state.cards.find(c => c.id === p.cardId);
+                histBody.innerHTML += `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                        <td class="p-4 text-xs">${p.date}</td>
+                        <td class="p-4 font-bold text-xs">${card ? card.name : 'Borrada'}</td>
+                        <td class="p-4 text-right font-bold text-rose-600">${fmt(p.amount)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteItem('payments', ${p.id})" class="text-slate-300 hover:text-rose-500"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // 4. Ingresos
+            const incList = document.getElementById('incomes-list');
+            incList.innerHTML = state.incomes.map(i => `
+                <div class="card-neo p-4 flex justify-between items-center">
+                    <div><p class="font-bold">${i.concept}</p><p class="text-xs text-slate-400">Mensual</p></div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-lg font-bold text-emerald-600">${fmt(i.amount)}</span>
+                        <button onclick="editIncome(${i.id})" class="text-slate-300 hover:text-indigo-500"><i class="fas fa-pen"></i></button>
+                        <button onclick="deleteItem('incomes', ${i.id})" class="text-slate-300 hover:text-rose-500"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // INICIO
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        window.onload = render;
+    </script>
+</body>
+</html>
