@@ -1,10 +1,9 @@
-<!-- CÓDIGO COMPLETO CON DRIVE Y EDICIÓN -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanzApp Pro + Sync</title>
+    <title>FinanzApp Pro - Sync Drive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -28,7 +27,7 @@
                 <button id="btn-login" onclick="handleAuthClick()" class="text-[10px] bg-slate-100 px-3 py-1.5 rounded-full font-bold text-slate-600 hover:bg-slate-200 transition">
                     <i class="fab fa-google mr-1"></i> Conectar Drive
                 </button>
-                <button id="btn-sync" onclick="saveToDrive()" class="hidden text-[10px] bg-indigo-600 px-3 py-1.5 rounded-full font-bold text-white shadow-lg shadow-indigo-100">
+                <button id="btn-sync" onclick="saveToDrive()" class="hidden text-[10px] bg-indigo-600 px-3 py-1.5 rounded-full font-bold text-white shadow-lg">
                     <i class="fas fa-sync-alt mr-1"></i> Sincronizar Nube
                 </button>
             </div>
@@ -59,7 +58,7 @@
             </div>
         </section>
 
-        <!-- Secciones Ocultas -->
+        <!-- Secciones -->
         <section id="sec-cards" class="hidden space-y-6"></section>
         <section id="sec-history" class="hidden space-y-4"></section>
         <section id="sec-incomes" class="hidden space-y-4"></section>
@@ -68,24 +67,24 @@
     <!-- NAVEGACIÓN -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t p-4 pb-6 z-40">
         <div class="max-w-md mx-auto flex justify-between items-center px-4">
-            <button onclick="showSection('dashboard')" class="flex flex-col items-center gap-1 text-indigo-600" id="nav-dashboard"><i class="fas fa-house-chimney text-xl"></i><span class="text-[10px] font-bold">INICIO</span></button>
-            <button onclick="showSection('cards')" class="flex flex-col items-center gap-1 text-slate-400" id="nav-cards"><i class="fas fa-credit-card text-xl"></i><span class="text-[10px] font-bold">TARJETAS</span></button>
-            <button onclick="showSection('history')" class="flex flex-col items-center gap-1 text-slate-400" id="nav-history"><i class="fas fa-clock-rotate-left text-xl"></i><span class="text-[10px] font-bold">PAGOS</span></button>
-            <button onclick="showSection('incomes')" class="flex flex-col items-center gap-1 text-slate-400" id="nav-incomes"><i class="fas fa-sack-dollar text-xl"></i><span class="text-[10px] font-bold">INGRESOS</span></button>
+            <button onclick="showSection('dashboard')" class="flex flex-col items-center gap-1 text-indigo-600 nav-btn" id="nav-dashboard"><i class="fas fa-house-chimney text-xl"></i><span class="text-[10px] font-bold">INICIO</span></button>
+            <button onclick="showSection('cards')" class="flex flex-col items-center gap-1 text-slate-400 nav-btn" id="nav-cards"><i class="fas fa-credit-card text-xl"></i><span class="text-[10px] font-bold">TARJETAS</span></button>
+            <button onclick="showSection('history')" class="flex flex-col items-center gap-1 text-slate-400 nav-btn" id="nav-history"><i class="fas fa-clock-rotate-left text-xl"></i><span class="text-[10px] font-bold">PAGOS</span></button>
+            <button onclick="showSection('incomes')" class="flex flex-col items-center gap-1 text-slate-400 nav-btn" id="nav-incomes"><i class="fas fa-sack-dollar text-xl"></i><span class="text-[10px] font-bold">INGRESOS</span></button>
         </div>
     </nav>
 
-    <!-- MODAL TARJETA (Ejemplo de uno, replicar lógica para otros) -->
+    <!-- MODALES (Sección para añadir contenido) -->
     <div id="modal-card" class="fixed inset-0 modal-bg hidden items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-8">
             <h3 class="text-xl font-bold mb-6">Tarjeta</h3>
             <input type="hidden" id="edit-card-id">
             <div class="space-y-4">
-                <input type="text" id="card-name" placeholder="Nombre" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <input type="text" id="card-name" placeholder="Nombre (ej. Oro)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 <input type="text" id="card-bank" placeholder="Banco" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="card-cut" placeholder="Corte" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
-                    <input type="number" id="card-limit" placeholder="Pago" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                    <input type="number" id="card-cut" placeholder="Día Corte" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                    <input type="number" id="card-limit" placeholder="Día Pago" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 </div>
                 <button onclick="saveCard()" class="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold">Guardar</button>
                 <button onclick="closeModal('modal-card')" class="w-full text-slate-400 py-2">Cancelar</button>
@@ -95,81 +94,92 @@
 
     <!-- SCRIPTS -->
     <script>
-        // CONFIGURACIÓN (AQUÍ TUS LLAVES)
-        const CLIENT_ID = 'TU_CLIENT_ID_AQUI';
-        const API_KEY = 'TU_API_KEY_AQUI';
+        // CONFIGURACIÓN (USANDO TU ID REAL)
+        const CLIENT_ID = '764556873375-etu7k4dnc1o6uimg7kvai1m18v06s61i.apps.googleusercontent.com';
+        const API_KEY = ''; // Opcional para Drive, lo principal es el CLIENT_ID
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
         let tokenClient;
         let state = { cards: [], expenses: [], payments: [], incomes: [] };
 
-        // Carga Inicial Local
-        function initLocal() {
-            const local = localStorage.getItem('fapp_data');
+        // --- SISTEMA BASE ---
+        function init() {
+            const local = localStorage.getItem('fapp_v3_data');
             if(local) state = JSON.parse(local);
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
             render();
         }
 
         function save() {
-            localStorage.setItem('fapp_data', JSON.stringify(state));
+            localStorage.setItem('fapp_v3_data', JSON.stringify(state));
             render();
         }
 
-        // Lógica de Google Auth
-        function gapiLoaded() { gapi.load('client', async () => { await gapi.client.init({apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS}); }); }
-        function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({client_id: CLIENT_ID, scope: SCOPES, callback: ''}); }
+        function showSection(id) {
+            ['dashboard', 'cards', 'history', 'incomes'].forEach(s => {
+                document.getElementById(`sec-${s}`).classList.toggle('hidden', s !== id);
+                document.getElementById(`nav-${s}`).classList.toggle('text-indigo-600', s === id);
+                document.getElementById(`nav-${s}`).classList.toggle('text-slate-400', s !== id);
+            });
+        }
 
-        function handleAuthClick() {
-            tokenClient.callback = async (resp) => {
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+        // --- GOOGLE DRIVE ---
+        function gapiLoaded() { gapi.load('client', () => gapi.client.init({discoveryDocs: DISCOVERY_DOCS})); }
+        function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({client_id: CLIENT_ID, scope: SCOPES, callback: (resp) => {
+            if(resp.access_token) {
                 document.getElementById('btn-login').classList.add('hidden');
                 document.getElementById('btn-sync').classList.remove('hidden');
                 loadFromDrive();
-            };
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        }
+            }
+        }}); }
+
+        function handleAuthClick() { tokenClient.requestAccessToken({prompt: 'consent'}); }
 
         async function saveToDrive() {
-            const fileName = "finanzapp_cloud.json";
+            const fileName = "finanzas_data.json";
             const content = JSON.stringify(state);
-            const blob = new Blob([content], {type: 'application/json'});
-            
-            // Lógica Simplificada de subida
-            const response = await gapi.client.drive.files.list({ q: `name = '${fileName}'` });
-            const file = response.result.files[0];
             const metadata = { name: fileName, mimeType: 'application/json' };
             
-            let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-            let method = 'POST';
-            if(file) { url = `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=media`; method = 'PATCH'; }
+            const response = await gapi.client.drive.files.list({ q: `name = '${fileName}' and trashed = false` });
+            const existingFile = response.result.files[0];
 
-            await fetch(url, {
+            const boundary = 'foo_bar_baz';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
+
+            const multipartRequestBody =
+                delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
+                delimiter + 'Content-Type: application/json\r\n\r\n' + content + close_delim;
+
+            const path = existingFile ? `/upload/drive/v3/files/${existingFile.id}?uploadType=multipart` : '/upload/drive/v3/files?uploadType=multipart';
+            const method = existingFile ? 'PATCH' : 'POST';
+
+            await fetch(`https://www.googleapis.com${path}`, {
                 method: method,
-                headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` },
-                body: file ? blob : content // Simplificado para el ejemplo
+                headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+                body: multipartRequestBody
             });
-            alert("¡Sincronizado!");
+            alert("¡Sincronizado con éxito!");
         }
 
         async function loadFromDrive() {
-            const response = await gapi.client.drive.files.list({ q: "name = 'finanzapp_cloud.json'" });
+            const response = await gapi.client.drive.files.list({ q: "name = 'finanzas_data.json' and trashed = false" });
             const file = response.result.files[0];
             if(file) {
-                const res = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
-                if(confirm("¿Bajar datos de la nube?")) { state = res.result; save(); }
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+                    headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` }
+                });
+                const cloudData = await res.json();
+                if(confirm("¿Descargar datos de la nube?")) { state = cloudData; save(); }
             }
         }
 
-        // UI Helpers (reutilizar tus funciones anteriores de render, saveCard, etc.)
-        function render() {
-            // Aquí va todo tu código de dibujo de tarjetas y dashboard
-            // (Para no saturar, usa la lógica del paso anterior)
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString();
-        }
-
-        window.onload = initLocal;
-    </script>
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
-</body>
-</html>
+        // --- LÓGICA DE NEGOCIO ---
+        function saveCard() {
+            const card = {
+                id: Date.now(),
+                name: document.getElementById('card-name')
