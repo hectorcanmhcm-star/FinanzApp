@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanzApp Pro - Sync Drive</title>
+    <title>FinanzApp Pro - Gestión Total</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -12,11 +12,12 @@
         .card-neo { background: white; border-radius: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; }
         .modal-bg { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 100; }
         .hidden { display: none; }
+        .nav-active { color: #4f46e5 !important; }
     </style>
 </head>
 <body class="pb-28">
 
-    <!-- HEADER CON GOOGLE DRIVE -->
+    <!-- HEADER -->
     <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-40">
         <div class="max-w-5xl mx-auto flex justify-between items-center">
             <div>
@@ -24,18 +25,19 @@
                 <p id="current-date" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"></p>
             </div>
             <div class="flex items-center gap-2">
-                <button id="btn-login" onclick="handleAuthClick()" class="text-[10px] bg-slate-100 px-3 py-1.5 rounded-full font-bold text-slate-600 hover:bg-slate-200 transition">
+                <button id="btn-login" onclick="handleAuthClick()" class="text-[10px] bg-slate-100 px-3 py-1.5 rounded-full font-bold text-slate-600 hover:bg-slate-200">
                     <i class="fab fa-google mr-1"></i> Conectar Drive
                 </button>
                 <button id="btn-sync" onclick="saveToDrive()" class="hidden text-[10px] bg-indigo-600 px-3 py-1.5 rounded-full font-bold text-white shadow-lg">
-                    <i class="fas fa-sync-alt mr-1"></i> Sincronizar Nube
+                    <i class="fas fa-sync-alt mr-1"></i> Sincronizar
                 </button>
             </div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto p-4 space-y-6">
-        <!-- Dashboard -->
+        
+        <!-- SECCIÓN: INICIO (DASHBOARD) -->
         <section id="sec-dashboard" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="card-neo p-6 border-l-4 border-emerald-500">
@@ -43,7 +45,7 @@
                     <h2 id="total-incomes" class="text-2xl font-bold text-slate-800">$0.00</h2>
                 </div>
                 <div class="card-neo p-6 border-l-4 border-rose-500">
-                    <p class="text-slate-400 text-xs font-bold uppercase">Pagos Realizados</p>
+                    <p class="text-slate-400 text-xs font-bold uppercase">Pagos Hechos</p>
                     <h2 id="total-payments-made" class="text-2xl font-bold text-rose-600">$0.00</h2>
                 </div>
                 <div class="card-neo p-6 border-l-4 border-indigo-500">
@@ -51,52 +53,147 @@
                     <h2 id="capital-free" class="text-2xl font-bold text-indigo-600">$0.00</h2>
                 </div>
             </div>
-            <div class="bg-indigo-900 rounded-[2rem] p-6 text-white shadow-2xl relative">
-                <p class="opacity-70 text-sm">Deuda Total Acumulada</p>
+
+            <div class="bg-indigo-900 rounded-[2rem] p-6 text-white shadow-2xl relative overflow-hidden">
+                <p class="opacity-70 text-sm">Deuda Total Tarjetas</p>
                 <h3 id="global-debt" class="text-3xl font-bold mt-1">$0.00</h3>
-                <p id="global-to-pay-month" class="mt-4 text-xs bg-white/20 inline-block px-3 py-1 rounded-full"></p>
+                <p id="global-to-pay-month" class="mt-4 text-[10px] bg-white/20 inline-block px-3 py-1 rounded-full uppercase font-bold tracking-wider"></p>
+                <i class="fas fa-wallet absolute -right-4 -bottom-4 text-7xl opacity-10"></i>
             </div>
         </section>
 
-        <!-- Secciones -->
-        <section id="sec-cards" class="hidden space-y-6"></section>
-        <section id="sec-history" class="hidden space-y-4"></section>
-        <section id="sec-incomes" class="hidden space-y-4"></section>
+        <!-- SECCIÓN: TARJETAS -->
+        <section id="sec-cards" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Tarjetas</h2>
+                <button onclick="openModal('modal-card')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">+ Nueva Tarjeta</button>
+            </div>
+            <div id="cards-container" class="grid grid-cols-1 gap-6"></div>
+        </section>
+
+        <!-- SECCIÓN: HISTORIAL DE PAGOS -->
+        <section id="sec-history" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Historial de Pagos</h2>
+                <button onclick="openModal('modal-payment')" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">Registrar Pago</button>
+            </div>
+            <div class="card-neo overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-100 font-bold">
+                        <tr>
+                            <th class="p-4">Fecha</th>
+                            <th class="p-4">Tarjeta</th>
+                            <th class="p-4 text-right">Monto</th>
+                            <th class="p-4 text-center"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN: INGRESOS -->
+        <section id="sec-incomes" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Ingresos</h2>
+                <button onclick="openModal('modal-income')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">+ Nuevo Ingreso</button>
+            </div>
+            <div id="incomes-list" class="space-y-3"></div>
+        </section>
+
     </main>
 
-    <!-- NAVEGACIÓN -->
+    <!-- NAVEGACIÓN INFERIOR -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t p-4 pb-6 z-40">
         <div class="max-w-md mx-auto flex justify-between items-center px-4">
-            <button onclick="showSection('dashboard')" class="flex flex-col items-center gap-1 text-indigo-600 nav-btn" id="nav-dashboard"><i class="fas fa-house-chimney text-xl"></i><span class="text-[10px] font-bold">INICIO</span></button>
-            <button onclick="showSection('cards')" class="flex flex-col items-center gap-1 text-slate-400 nav-btn" id="nav-cards"><i class="fas fa-credit-card text-xl"></i><span class="text-[10px] font-bold">TARJETAS</span></button>
-            <button onclick="showSection('history')" class="flex flex-col items-center gap-1 text-slate-400 nav-btn" id="nav-history"><i class="fas fa-clock-rotate-left text-xl"></i><span class="text-[10px] font-bold">PAGOS</span></button>
-            <button onclick="showSection('incomes')" class="flex flex-col items-center gap-1 text-slate-400 nav-btn" id="nav-incomes"><i class="fas fa-sack-dollar text-xl"></i><span class="text-[10px] font-bold">INGRESOS</span></button>
+            <button onclick="showSection('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-indigo-600">
+                <i class="fas fa-house-chimney text-xl"></i><span class="text-[10px] font-bold">INICIO</span>
+            </button>
+            <button onclick="showSection('cards')" id="nav-cards" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fas fa-credit-card text-xl"></i><span class="text-[10px] font-bold">TARJETAS</span>
+            </button>
+            <button onclick="showSection('history')" id="nav-history" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fas fa-clock-rotate-left text-xl"></i><span class="text-[10px] font-bold">PAGOS</span>
+            </button>
+            <button onclick="showSection('incomes')" id="nav-incomes" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fas fa-sack-dollar text-xl"></i><span class="text-[10px] font-bold">INGRESOS</span>
+            </button>
         </div>
     </nav>
 
-    <!-- MODALES (Sección para añadir contenido) -->
+    <!-- TODOS LOS MODALES -->
+    
+    <!-- Modal Tarjeta -->
     <div id="modal-card" class="fixed inset-0 modal-bg hidden items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
             <h3 class="text-xl font-bold mb-6">Tarjeta</h3>
             <input type="hidden" id="edit-card-id">
             <div class="space-y-4">
-                <input type="text" id="card-name" placeholder="Nombre (ej. Oro)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <input type="text" id="card-name" placeholder="Nombre (ej. Visa)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 <input type="text" id="card-bank" placeholder="Banco" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 <div class="grid grid-cols-2 gap-4">
                     <input type="number" id="card-cut" placeholder="Día Corte" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                     <input type="number" id="card-limit" placeholder="Día Pago" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 </div>
                 <button onclick="saveCard()" class="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold">Guardar</button>
-                <button onclick="closeModal('modal-card')" class="w-full text-slate-400 py-2">Cancelar</button>
+                <button onclick="closeModal('modal-card')" class="w-full text-slate-400 font-bold py-2">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Compra -->
+    <div id="modal-expense" class="fixed inset-0 modal-bg hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Nueva Compra</h3>
+            <input type="hidden" id="exp-card-id">
+            <div class="space-y-4">
+                <input type="text" id="exp-desc" placeholder="Descripción" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <input type="number" id="exp-amount" placeholder="Monto total" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <select id="exp-type" class="w-full p-4 bg-slate-50 rounded-2xl outline-none" onchange="document.getElementById('box-msi').classList.toggle('hidden', this.value === 'contado')">
+                    <option value="contado">Contado</option>
+                    <option value="msi">Meses (MSI/Intereses)</option>
+                </select>
+                <div id="box-msi" class="hidden grid grid-cols-2 gap-4">
+                    <input type="number" id="exp-months" placeholder="Meses" class="p-4 bg-slate-50 rounded-2xl outline-none">
+                    <input type="number" id="exp-interest" placeholder="Interés %" class="p-4 bg-slate-50 rounded-2xl outline-none" value="0">
+                </div>
+                <button onclick="saveExpense()" class="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold">Registrar</button>
+                <button onclick="closeModal('modal-expense')" class="w-full text-slate-400 font-bold py-2">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pago (Historial) -->
+    <div id="modal-payment" class="fixed inset-0 modal-bg hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Abonar a Tarjeta</h3>
+            <div class="space-y-4">
+                <select id="pay-card-id" class="w-full p-4 bg-slate-50 rounded-2xl outline-none"></select>
+                <input type="date" id="pay-date" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <input type="number" id="pay-amount" placeholder="Monto a abonar" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <button onclick="savePayment()" class="w-full bg-rose-500 text-white p-4 rounded-2xl font-bold">Registrar Pago</button>
+                <button onclick="closeModal('modal-payment')" class="w-full text-slate-400 font-bold py-2">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ingreso -->
+    <div id="modal-income" class="fixed inset-0 modal-bg hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Ingreso Mensual</h3>
+            <div class="space-y-4">
+                <input type="text" id="inc-concept" placeholder="Concepto (ej. Sueldo)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <input type="number" id="inc-amount" placeholder="Monto" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <button onclick="saveIncome()" class="w-full bg-emerald-600 text-white p-4 rounded-2xl font-bold">Guardar</button>
+                <button onclick="closeModal('modal-income')" class="w-full text-slate-400 font-bold py-2">Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- SCRIPTS -->
     <script>
-        // CONFIGURACIÓN (USANDO TU ID REAL)
+        // --- CONFIGURACIÓN GOOGLE ---
         const CLIENT_ID = '764556873375-etu7k4dnc1o6uimg7kvai1m18v06s61i.apps.googleusercontent.com';
-        const API_KEY = ''; // Opcional para Drive, lo principal es el CLIENT_ID
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -105,14 +202,14 @@
 
         // --- SISTEMA BASE ---
         function init() {
-            const local = localStorage.getItem('fapp_v3_data');
+            const local = localStorage.getItem('fapp_master_v1');
             if(local) state = JSON.parse(local);
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
             render();
         }
 
         function save() {
-            localStorage.setItem('fapp_v3_data', JSON.stringify(state));
+            localStorage.setItem('fapp_master_v1', JSON.stringify(state));
             render();
         }
 
@@ -124,62 +221,232 @@
             });
         }
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-
-        // --- GOOGLE DRIVE ---
-        function gapiLoaded() { gapi.load('client', () => gapi.client.init({discoveryDocs: DISCOVERY_DOCS})); }
-        function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({client_id: CLIENT_ID, scope: SCOPES, callback: (resp) => {
-            if(resp.access_token) {
-                document.getElementById('btn-login').classList.add('hidden');
-                document.getElementById('btn-sync').classList.remove('hidden');
-                loadFromDrive();
+        function openModal(id, extra = null) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            if(id === 'modal-expense') document.getElementById('exp-card-id').value = extra;
+            if(id === 'modal-payment') {
+                const sel = document.getElementById('pay-card-id');
+                sel.innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
             }
-        }}); }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
+            document.querySelectorAll(`#${id} input`).forEach(i => i.value = '');
+        }
+
+        // --- GOOGLE DRIVE SYNC ---
+        function gapiLoaded() { gapi.load('client', () => gapi.client.init({discoveryDocs: DISCOVERY_DOCS})); }
+        function gisLoaded() { 
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID, scope: SCOPES, 
+                callback: (resp) => {
+                    if(resp.access_token) {
+                        document.getElementById('btn-login').classList.add('hidden');
+                        document.getElementById('btn-sync').classList.remove('hidden');
+                        loadFromDrive();
+                    }
+                }
+            }); 
+        }
 
         function handleAuthClick() { tokenClient.requestAccessToken({prompt: 'consent'}); }
 
         async function saveToDrive() {
-            const fileName = "finanzas_data.json";
-            const content = JSON.stringify(state);
-            const metadata = { name: fileName, mimeType: 'application/json' };
-            
+            const fileName = "finanzapp_master.json";
             const response = await gapi.client.drive.files.list({ q: `name = '${fileName}' and trashed = false` });
-            const existingFile = response.result.files[0];
+            const file = response.result.files[0];
+            
+            const metadata = { name: fileName, mimeType: 'application/json' };
+            const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
+            
+            const fd = new FormData();
+            fd.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+            fd.append('file', blob);
 
-            const boundary = 'foo_bar_baz';
-            const delimiter = "\r\n--" + boundary + "\r\n";
-            const close_delim = "\r\n--" + boundary + "--";
+            const url = file 
+                ? `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart` 
+                : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
-            const multipartRequestBody =
-                delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
-                delimiter + 'Content-Type: application/json\r\n\r\n' + content + close_delim;
-
-            const path = existingFile ? `/upload/drive/v3/files/${existingFile.id}?uploadType=multipart` : '/upload/drive/v3/files?uploadType=multipart';
-            const method = existingFile ? 'PATCH' : 'POST';
-
-            await fetch(`https://www.googleapis.com${path}`, {
-                method: method,
-                headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
-                body: multipartRequestBody
+            await fetch(url, {
+                method: file ? 'PATCH' : 'POST',
+                headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` },
+                body: fd
             });
-            alert("¡Sincronizado con éxito!");
+            alert("¡Sincronizado con Drive!");
         }
 
         async function loadFromDrive() {
-            const response = await gapi.client.drive.files.list({ q: "name = 'finanzas_data.json' and trashed = false" });
+            const response = await gapi.client.drive.files.list({ q: "name = 'finanzapp_master.json' and trashed = false" });
             const file = response.result.files[0];
             if(file) {
                 const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
                     headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` }
                 });
-                const cloudData = await res.json();
-                if(confirm("¿Descargar datos de la nube?")) { state = cloudData; save(); }
+                const data = await res.json();
+                if(confirm("Se encontraron datos en la nube. ¿Deseas cargarlos?")) {
+                    state = data; save();
+                }
             }
         }
 
         // --- LÓGICA DE NEGOCIO ---
         function saveCard() {
-            const card = {
+            const id = document.getElementById('edit-card-id').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('card-name').value,
+                bank: document.getElementById('card-bank').value,
+                cut: document.getElementById('card-cut').value,
+                limit: document.getElementById('card-limit').value
+            };
+            if(id) state.cards = state.cards.map(c => c.id === data.id ? data : c);
+            else state.cards.push(data);
+            save(); closeModal('modal-card');
+        }
+
+        function saveExpense() {
+            const data = {
                 id: Date.now(),
-                name: document.getElementById('card-name')
+                cardId: parseInt(document.getElementById('exp-card-id').value),
+                desc: document.getElementById('exp-desc').value,
+                amount: parseFloat(document.getElementById('exp-amount').value),
+                type: document.getElementById('exp-type').value,
+                months: parseInt(document.getElementById('exp-months').value) || 1,
+                interest: parseFloat(document.getElementById('exp-interest').value) || 0
+            };
+            state.expenses.push(data);
+            save(); closeModal('modal-expense');
+        }
+
+        function savePayment() {
+            const data = {
+                id: Date.now(),
+                cardId: parseInt(document.getElementById('pay-card-id').value),
+                date: document.getElementById('pay-date').value,
+                amount: parseFloat(document.getElementById('pay-amount').value)
+            };
+            state.payments.push(data);
+            save(); closeModal('modal-payment');
+        }
+
+        function saveIncome() {
+            const data = {
+                id: Date.now(),
+                concept: document.getElementById('inc-concept').value,
+                amount: parseFloat(document.getElementById('inc-amount').value)
+            };
+            state.incomes.push(data);
+            save(); closeModal('modal-income');
+        }
+
+        function deleteItem(coll, id) {
+            if(confirm('¿Eliminar registro?')) {
+                state[coll] = state[coll].filter(i => i.id !== id);
+                if(coll === 'cards') state.expenses = state.expenses.filter(e => e.cardId !== id);
+                save();
+            }
+        }
+
+        const fmt = (n) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
+
+        function calculateCard(cardId) {
+            const exps = state.expenses.filter(e => e.cardId === cardId);
+            let totalDebt = 0; let monthly = 0;
+            exps.forEach(e => {
+                const total = e.amount * (1 + (e.interest/100));
+                totalDebt += total;
+                monthly += (total / e.months);
+            });
+            return { totalDebt, monthly };
+        }
+
+        function render() {
+            // Dashboard
+            let totalInc = state.incomes.reduce((a,b) => a + b.amount, 0);
+            let totalPayMade = state.payments.reduce((a,b) => a + b.amount, 0);
+            let globalDebt = 0; let globalToPay = 0;
+
+            state.cards.forEach(c => {
+                const m = calculateCard(c.id);
+                globalDebt += m.totalDebt;
+                globalToPay += m.monthly;
+            });
+
+            document.getElementById('total-incomes').innerText = fmt(totalInc);
+            document.getElementById('total-payments-made').innerText = fmt(totalPayMade);
+            document.getElementById('capital-free').innerText = fmt(totalInc - totalPayMade);
+            document.getElementById('global-debt').innerText = fmt(globalDebt);
+            document.getElementById('global-to-pay-month').innerText = `Requerido este mes: ${fmt(globalToPay)}`;
+
+            // Tarjetas
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            state.cards.forEach(c => {
+                const m = calculateCard(c.id);
+                const cardExps = state.expenses.filter(e => e.cardId === c.id);
+                container.innerHTML += `
+                    <div class="card-neo overflow-hidden">
+                        <div class="bg-slate-800 p-5 text-white flex justify-between items-center">
+                            <div><h3 class="font-bold">${c.name}</h3><p class="text-[10px] opacity-60 uppercase">${c.bank} | Corte: ${c.cut}</p></div>
+                            <div class="flex gap-2">
+                                <button onclick="openModal('modal-expense', ${c.id})" class="bg-indigo-500 text-[10px] px-3 py-1 rounded-lg">+ Compra</button>
+                                <button onclick="deleteItem('cards', ${c.id})" class="text-rose-400 p-1"><i class="fas fa-trash text-xs"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-4 grid grid-cols-2 gap-4 border-b bg-slate-50">
+                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">Deuda</p><p class="font-bold text-sm">${fmt(m.totalDebt)}</p></div>
+                            <div class="text-right"><p class="text-[10px] text-slate-400 font-bold uppercase">Pago Mes</p><p class="font-bold text-sm text-indigo-600">${fmt(m.monthly)}</p></div>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            ${cardExps.map(e => `
+                                <div class="flex justify-between items-center text-xs border-b border-slate-100 pb-2">
+                                    <span>${e.desc} <small class="text-slate-400">(${e.months} m)</small></span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-bold">${fmt(e.amount)}</span>
+                                        <button onclick="deleteItem('expenses', ${e.id})" class="text-slate-300 hover:text-rose-500"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Historial
+            const hist = document.getElementById('history-table-body');
+            hist.innerHTML = state.payments.map(p => {
+                const card = state.cards.find(c => c.id === p.cardId);
+                return `
+                    <tr class="border-b border-slate-50">
+                        <td class="p-4 text-xs">${p.date}</td>
+                        <td class="p-4 font-bold text-xs">${card ? card.name : '---'}</td>
+                        <td class="p-4 text-right font-bold text-rose-500">${fmt(p.amount)}</td>
+                        <td class="p-4 text-center"><button onclick="deleteItem('payments', ${p.id})" class="text-slate-300"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Ingresos
+            const incList = document.getElementById('incomes-list');
+            incList.innerHTML = state.incomes.map(i => `
+                <div class="card-neo p-4 flex justify-between items-center">
+                    <div><p class="font-bold text-sm">${i.concept}</p><p class="text-[10px] text-slate-400 uppercase">Mensual</p></div>
+                    <div class="flex items-center gap-4">
+                        <span class="font-bold text-emerald-600">${fmt(i.amount)}</span>
+                        <button onclick="deleteItem('incomes', ${i.id})" class="text-slate-300"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.onload = init;
+    </script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+</body>
+</html>
