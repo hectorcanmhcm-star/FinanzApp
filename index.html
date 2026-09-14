@@ -19,14 +19,15 @@
 
     <!-- CABECERA -->
     <header class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
+        <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
-                <i class="fas fa-wallet text-indigo-200"></i> FinanzApp Pro <span class="text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full">v5 Actualizado</span>
+                <i class="fas fa-wallet text-indigo-200"></i> FinanzApp <span class="text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full">v5 Pro</span>
             </h1>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
-                <button id="btn-sync" onclick="saveToDrive()" class="hidden text-xs bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full font-semibold transition flex items-center gap-1 shadow"><i class="fas fa-cloud-upload-alt"></i> Subir</button>
-                <button id="btn-pull" onclick="loadFromDrive()" class="hidden text-xs bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-full font-semibold transition flex items-center gap-1 shadow"><i class="fas fa-cloud-download-alt"></i> Bajar</button>
+                <button id="btn-sync" onclick="saveToDriveBtn()" class="hidden text-xs bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full font-semibold transition shadow flex items-center gap-1"><i class="fas fa-cloud-upload-alt"></i> Subir</button>
+                <button id="btn-pull" onclick="loadFromDrive()" class="hidden text-xs bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-full font-semibold transition shadow flex items-center gap-1"><i class="fas fa-cloud-download-alt"></i> Bajar</button>
+                <button id="btn-logout" onclick="handleSignOut()" class="hidden text-xs bg-rose-500 hover:bg-rose-600 px-3 py-1.5 rounded-full font-semibold transition shadow flex items-center" title="Cerrar sesión de Drive"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
     </header>
@@ -243,6 +244,8 @@
 
         let state = { cards: [], expenses: [], payments: [], incomes: [] };
         let tokenClient;
+        let isGapiReady = false;
+        let isGisReady = false;
 
         function getTodayString() { return new Date().toISOString().split('T')[0]; }
 
@@ -253,11 +256,7 @@
             if(dataV5) {
                 try { state = JSON.parse(dataV5); } catch(e){}
             } else if (dataV4) {
-                // Migración automática de la versión anterior a esta para no perder tus datos
-                try { 
-                    state = JSON.parse(dataV4); 
-                    save(); // Guarda directamente en la v5
-                } catch(e){}
+                try { state = JSON.parse(dataV4); save(); } catch(e){}
             }
             render();
         }
@@ -267,9 +266,7 @@
             render();
         }
 
-        function fmt(n) {
-            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0);
-        }
+        function fmt(n) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0); }
 
         function render() {
             const totalInc = state.incomes.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
@@ -302,7 +299,6 @@
                 divCards.innerHTML = state.cards.map(c => {
                     const myExps = state.expenses.filter(e => e.cardId === c.id);
                     const myPays = state.payments.filter(p => p.cardId === c.id);
-
                     const cardGrossDebt = myExps.reduce((acc, e) => acc + (parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100))), 0);
                     const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
@@ -319,12 +315,11 @@
                                     <button onclick="editCard(${c.id})" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg text-slate-200 transition" title="Editar tarjeta">
                                         <i class="fas fa-pen"></i> Editar
                                     </button>
-                                    <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+                                    <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition shadow flex items-center gap-1">
                                         <i class="fas fa-plus"></i> Compra
                                     </button>
                                 </div>
                             </div>
-                            
                             <div class="mt-3 pt-3 border-t border-slate-700/80 flex justify-between items-center text-xs">
                                 <div class="flex gap-4">
                                     <span class="text-slate-300">Corte: <b class="text-white">Día ${c.cut || '--'}</b></span>
@@ -340,7 +335,6 @@
                                 <span>Abonado a esta tarjeta: ${fmt(cardPaid)}</span>
                             </div>
                         </div>
-
                         <div class="p-4 space-y-2">
                             <p class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Compras registradas</p>
                             ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Sin compras registradas</p>' : ''}
@@ -359,7 +353,6 @@
                                     </div>
                                 </div>
                             `).join('')}
-                            
                             <div class="pt-3 border-t border-gray-100 flex justify-end">
                                 <button onclick="del('cards', ${c.id})" class="text-xs text-rose-500 hover:underline">Eliminar tarjeta</button>
                             </div>
@@ -377,9 +370,7 @@
                         <div>
                             <div class="flex items-center gap-2">
                                 <span class="text-sm font-bold text-slate-700">${i.desc}</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${i.frequency === 'monthly' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">
-                                    ${i.frequency === 'monthly' ? 'Mensual' : 'Único'}
-                                </span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${i.frequency === 'monthly' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">${i.frequency === 'monthly' ? 'Mensual' : 'Único'}</span>
                             </div>
                             <p class="text-[10px] text-gray-400 mt-0.5"><i class="far fa-calendar-alt"></i> ${i.date || 'Sin fecha'}</p>
                         </div>
@@ -420,203 +411,48 @@
                 document.getElementById('nav-'+s).classList.toggle('active-tab', s === id);
             });
         }
-
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- TARJETAS ---
-        function openCardModal() {
-            document.getElementById('modal-card-title').innerText = "Nueva Tarjeta";
-            document.getElementById('c-id').value = '';
-            document.getElementById('c-name').value = '';
-            document.getElementById('c-bank').value = '';
-            document.getElementById('c-cut').value = '';
-            document.getElementById('c-pay').value = '';
-            document.getElementById('modal-card').style.display = 'flex';
+        // Funciones CRUD exactas a la versión anterior
+        function openCardModal() { document.getElementById('modal-card-title').innerText = "Nueva Tarjeta"; document.getElementById('c-id').value = ''; document.getElementById('c-name').value = ''; document.getElementById('c-bank').value = ''; document.getElementById('c-cut').value = ''; document.getElementById('c-pay').value = ''; document.getElementById('modal-card').style.display = 'flex'; }
+        function editCard(id) { const c = state.cards.find(x => x.id === Number(id)); if(!c) return; document.getElementById('modal-card-title').innerText = "Editar Tarjeta"; document.getElementById('c-id').value = c.id; document.getElementById('c-name').value = c.name; document.getElementById('c-bank').value = c.bank || ''; document.getElementById('c-cut').value = c.cut || ''; document.getElementById('c-pay').value = c.pay || ''; document.getElementById('modal-card').style.display = 'flex'; }
+        function saveCard() { const id = document.getElementById('c-id').value; const name = document.getElementById('c-name').value.trim(); const bank = document.getElementById('c-bank').value.trim(); const cut = parseInt(document.getElementById('c-cut').value) || ''; const pay = parseInt(document.getElementById('c-pay').value) || ''; if(!name) return alert('Ingresa nombre'); if(id) { const c = state.cards.find(x => x.id === Number(id)); if(c) { c.name = name; c.bank = bank; c.cut = cut; c.pay = pay; } } else { state.cards.push({ id: Date.now(), name, bank, cut, pay }); } save(); closeModal('modal-card'); }
+        function openExpModal(cardId) { document.getElementById('modal-exp-title').innerText = "Registrar Compra"; document.getElementById('e-id').value = ''; document.getElementById('exp-card-id').value = cardId; document.getElementById('e-desc').value = ''; document.getElementById('e-amount').value = ''; document.getElementById('e-date').value = getTodayString(); document.getElementById('e-type').value = 'contado'; document.getElementById('e-months').value = '1'; document.getElementById('e-int').value = '0'; document.getElementById('msi-div').classList.add('hidden'); document.getElementById('modal-exp').style.display = 'flex'; }
+        function editExp(id) { const e = state.expenses.find(x => x.id === Number(id)); if(!e) return; document.getElementById('modal-exp-title').innerText = "Editar Compra"; document.getElementById('e-id').value = e.id; document.getElementById('exp-card-id').value = e.cardId; document.getElementById('e-desc').value = e.desc; document.getElementById('e-amount').value = e.amount; document.getElementById('e-date').value = e.date || getTodayString(); document.getElementById('e-type').value = e.type || 'contado'; document.getElementById('e-months').value = e.months || 1; document.getElementById('e-int').value = e.interest || 0; document.getElementById('msi-div').classList.toggle('hidden', e.type !== 'msi'); document.getElementById('modal-exp').style.display = 'flex'; }
+        function saveExp() { const id = document.getElementById('e-id').value; const cardId = parseInt(document.getElementById('exp-card-id').value); const desc = document.getElementById('e-desc').value.trim() || 'Compra'; const amount = parseFloat(document.getElementById('e-amount').value) || 0; const date = document.getElementById('e-date').value || getTodayString(); const type = document.getElementById('e-type').value; const months = parseInt(document.getElementById('e-months').value) || 1; const interest = parseFloat(document.getElementById('e-int').value) || 0; if(amount <= 0) return alert('Ingresa monto válido'); if(id) { const exp = state.expenses.find(x => x.id === Number(id)); if(exp) { exp.desc = desc; exp.amount = amount; exp.date = date; exp.type = type; exp.months = months; exp.interest = interest; } } else { state.expenses.push({ id: Date.now(), cardId, desc, amount, date, type, months, interest }); } save(); closeModal('modal-exp'); }
+        function openPayModal() { if(state.cards.length === 0) return alert('Primero registra tarjeta'); document.getElementById('modal-pay-title').innerText = "Registrar Abono"; document.getElementById('p-id').value = ''; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('p-date').value = getTodayString(); document.getElementById('p-amount').value = ''; document.getElementById('modal-pay').style.display = 'flex'; }
+        function editPay(id) { const p = state.payments.find(x => x.id === Number(id)); if(!p) return; document.getElementById('modal-pay-title').innerText = "Editar Abono"; document.getElementById('p-id').value = p.id; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name}</option>`).join(''); document.getElementById('p-date').value = p.date || getTodayString(); document.getElementById('p-amount').value = p.amount; document.getElementById('modal-pay').style.display = 'flex'; }
+        function savePay() { const id = document.getElementById('p-id').value; const cardId = parseInt(document.getElementById('p-card').value); const date = document.getElementById('p-date').value || getTodayString(); const amount = parseFloat(document.getElementById('p-amount').value) || 0; if(amount <= 0) return alert('Ingresa abono válido'); if(id) { const p = state.payments.find(x => x.id === Number(id)); if(p) { p.cardId = cardId; p.date = date; p.amount = amount; } } else { state.payments.push({ id: Date.now(), cardId, date, amount }); } save(); closeModal('modal-pay'); }
+        function openIncomeModal() { document.getElementById('modal-income-title').innerText = "Nuevo Ingreso"; document.getElementById('i-id').value = ''; document.getElementById('i-desc').value = ''; document.getElementById('i-amount').value = ''; document.getElementById('i-frequency').value = 'monthly'; document.getElementById('i-date').value = getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
+        function editIncome(id) { const i = state.incomes.find(x => x.id === Number(id)); if(!i) return; document.getElementById('modal-income-title').innerText = "Editar Ingreso"; document.getElementById('i-id').value = i.id; document.getElementById('i-desc').value = i.desc; document.getElementById('i-amount').value = i.amount; document.getElementById('i-frequency').value = i.frequency || 'monthly'; document.getElementById('i-date').value = i.date || getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
+        function saveIncome() { const id = document.getElementById('i-id').value; const desc = document.getElementById('i-desc').value.trim() || 'Ingreso'; const amount = parseFloat(document.getElementById('i-amount').value) || 0; const frequency = document.getElementById('i-frequency').value; const date = document.getElementById('i-date').value || getTodayString(); if(amount <= 0) return alert('Ingresa monto válido'); if(id) { const i = state.incomes.find(x => x.id === Number(id)); if(i) { i.desc = desc; i.amount = amount; i.frequency = frequency; i.date = date; } } else { state.incomes.push({ id: Date.now(), desc, amount, frequency, date }); } save(); closeModal('modal-income'); }
+        function del(type, id) { if(confirm('¿Seguro que deseas eliminar este elemento?')) { state[type] = state[type].filter(i => i.id !== Number(id)); if(type === 'cards') { state.expenses = state.expenses.filter(e => e.cardId !== Number(id)); state.payments = state.payments.filter(p => p.cardId !== Number(id)); } save(); } }
+
+        // --- DRIVE SYNC CON PERSISTENCIA Y AUTOGUARDADO ---
+        function updateAuthUI(isLoggedIn) {
+            document.getElementById('btn-login').classList.toggle('hidden', isLoggedIn);
+            document.getElementById('btn-sync').classList.toggle('hidden', !isLoggedIn);
+            document.getElementById('btn-pull').classList.toggle('hidden', !isLoggedIn);
+            document.getElementById('btn-logout').classList.toggle('hidden', !isLoggedIn);
         }
 
-        function editCard(id) {
-            const c = state.cards.find(x => x.id === Number(id));
-            if(!c) return;
-            document.getElementById('modal-card-title').innerText = "Editar Tarjeta";
-            document.getElementById('c-id').value = c.id;
-            document.getElementById('c-name').value = c.name;
-            document.getElementById('c-bank').value = c.bank || '';
-            document.getElementById('c-cut').value = c.cut || '';
-            document.getElementById('c-pay').value = c.pay || '';
-            document.getElementById('modal-card').style.display = 'flex';
-        }
-
-        function saveCard() {
-            const id = document.getElementById('c-id').value;
-            const name = document.getElementById('c-name').value.trim();
-            const bank = document.getElementById('c-bank').value.trim();
-            const cut = parseInt(document.getElementById('c-cut').value) || '';
-            const pay = parseInt(document.getElementById('c-pay').value) || '';
-
-            if(!name) return alert('Ingresa un nombre para la tarjeta');
-
-            if(id) {
-                const c = state.cards.find(x => x.id === Number(id));
-                if(c) { c.name = name; c.bank = bank; c.cut = cut; c.pay = pay; }
-            } else {
-                state.cards.push({ id: Date.now(), name, bank, cut, pay });
-            }
-            save();
-            closeModal('modal-card');
-        }
-
-        // --- COMPRAS ---
-        function openExpModal(cardId) {
-            document.getElementById('modal-exp-title').innerText = "Registrar Compra";
-            document.getElementById('e-id').value = '';
-            document.getElementById('exp-card-id').value = cardId;
-            document.getElementById('e-desc').value = '';
-            document.getElementById('e-amount').value = '';
-            document.getElementById('e-date').value = getTodayString();
-            document.getElementById('e-type').value = 'contado';
-            document.getElementById('e-months').value = '1';
-            document.getElementById('e-int').value = '0';
-            document.getElementById('msi-div').classList.add('hidden');
-            document.getElementById('modal-exp').style.display = 'flex';
-        }
-
-        function editExp(id) {
-            const e = state.expenses.find(x => x.id === Number(id));
-            if(!e) return;
-            document.getElementById('modal-exp-title').innerText = "Editar Compra";
-            document.getElementById('e-id').value = e.id;
-            document.getElementById('exp-card-id').value = e.cardId;
-            document.getElementById('e-desc').value = e.desc;
-            document.getElementById('e-amount').value = e.amount;
-            document.getElementById('e-date').value = e.date || getTodayString();
-            document.getElementById('e-type').value = e.type || 'contado';
-            document.getElementById('e-months').value = e.months || 1;
-            document.getElementById('e-int').value = e.interest || 0;
-            document.getElementById('msi-div').classList.toggle('hidden', e.type !== 'msi');
-            document.getElementById('modal-exp').style.display = 'flex';
-        }
-
-        function saveExp() {
-            const id = document.getElementById('e-id').value;
-            const cardId = parseInt(document.getElementById('exp-card-id').value);
-            const desc = document.getElementById('e-desc').value.trim() || 'Compra';
-            const amount = parseFloat(document.getElementById('e-amount').value) || 0;
-            const date = document.getElementById('e-date').value || getTodayString();
-            const type = document.getElementById('e-type').value;
-            const months = parseInt(document.getElementById('e-months').value) || 1;
-            const interest = parseFloat(document.getElementById('e-int').value) || 0;
-
-            if(amount <= 0) return alert('Ingresa un monto válido');
-
-            if(id) {
-                const exp = state.expenses.find(x => x.id === Number(id));
-                if(exp) {
-                    exp.desc = desc; exp.amount = amount; exp.date = date;
-                    exp.type = type; exp.months = months; exp.interest = interest;
+        function checkExistingAuth() {
+            if (isGapiReady && isGisReady) {
+                const token = localStorage.getItem('gdrive_token');
+                const exp = localStorage.getItem('gdrive_token_exp');
+                if(token && exp && Date.now() < parseInt(exp)) {
+                    gapi.client.setToken({ access_token: token });
+                    updateAuthUI(true);
                 }
-            } else {
-                state.expenses.push({ id: Date.now(), cardId, desc, amount, date, type, months, interest });
             }
-            save();
-            closeModal('modal-exp');
         }
 
-        // --- ABONOS ---
-        function openPayModal() {
-            if(state.cards.length === 0) return alert('Primero debes registrar una tarjeta');
-            document.getElementById('modal-pay-title').innerText = "Registrar Abono";
-            document.getElementById('p-id').value = '';
-            document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            document.getElementById('p-date').value = getTodayString();
-            document.getElementById('p-amount').value = '';
-            document.getElementById('modal-pay').style.display = 'flex';
-        }
-
-        function editPay(id) {
-            const p = state.payments.find(x => x.id === Number(id));
-            if(!p) return;
-            document.getElementById('modal-pay-title').innerText = "Editar Abono";
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name}</option>`).join('');
-            document.getElementById('p-date').value = p.date || getTodayString();
-            document.getElementById('p-amount').value = p.amount;
-            document.getElementById('modal-pay').style.display = 'flex';
-        }
-
-        function savePay() {
-            const id = document.getElementById('p-id').value;
-            const cardId = parseInt(document.getElementById('p-card').value);
-            const date = document.getElementById('p-date').value || getTodayString();
-            const amount = parseFloat(document.getElementById('p-amount').value) || 0;
-
-            if(amount <= 0) return alert('Ingresa un monto de abono válido');
-
-            if(id) {
-                const p = state.payments.find(x => x.id === Number(id));
-                if(p) { p.cardId = cardId; p.date = date; p.amount = amount; }
-            } else {
-                state.payments.push({ id: Date.now(), cardId, date, amount });
-            }
-            save();
-            closeModal('modal-pay');
-        }
-
-        // --- INGRESOS ---
-        function openIncomeModal() {
-            document.getElementById('modal-income-title').innerText = "Nuevo Ingreso";
-            document.getElementById('i-id').value = '';
-            document.getElementById('i-desc').value = '';
-            document.getElementById('i-amount').value = '';
-            document.getElementById('i-frequency').value = 'monthly';
-            document.getElementById('i-date').value = getTodayString();
-            document.getElementById('modal-income').style.display = 'flex';
-        }
-
-        function editIncome(id) {
-            const i = state.incomes.find(x => x.id === Number(id));
-            if(!i) return;
-            document.getElementById('modal-income-title').innerText = "Editar Ingreso";
-            document.getElementById('i-id').value = i.id;
-            document.getElementById('i-desc').value = i.desc;
-            document.getElementById('i-amount').value = i.amount;
-            document.getElementById('i-frequency').value = i.frequency || 'monthly';
-            document.getElementById('i-date').value = i.date || getTodayString();
-            document.getElementById('modal-income').style.display = 'flex';
-        }
-
-        function saveIncome() {
-            const id = document.getElementById('i-id').value;
-            const desc = document.getElementById('i-desc').value.trim() || 'Ingreso';
-            const amount = parseFloat(document.getElementById('i-amount').value) || 0;
-            const frequency = document.getElementById('i-frequency').value;
-            const date = document.getElementById('i-date').value || getTodayString();
-
-            if(amount <= 0) return alert('Ingresa un monto válido');
-
-            if(id) {
-                const i = state.incomes.find(x => x.id === Number(id));
-                if(i) { i.desc = desc; i.amount = amount; i.frequency = frequency; i.date = date; }
-            } else {
-                state.incomes.push({ id: Date.now(), desc, amount, frequency, date });
-            }
-            save();
-            closeModal('modal-income');
-        }
-
-        function del(type, id) { 
-            if(confirm('¿Seguro que deseas eliminar este elemento?')) { 
-                state[type] = state[type].filter(i => i.id !== Number(id)); 
-                if(type === 'cards') {
-                    state.expenses = state.expenses.filter(e => e.cardId !== Number(id));
-                    state.payments = state.payments.filter(p => p.cardId !== Number(id));
-                }
-                save(); 
-            } 
-        }
-
-        // --- DRIVE SYNC ---
         function gapiLoaded() { 
-            gapi.load('client', () => { gapi.client.init({ discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"] }); }); 
+            gapi.load('client', async () => { 
+                await gapi.client.init({ discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"] }); 
+                isGapiReady = true;
+                checkExistingAuth();
+            }); 
         }
 
         function gisLoaded() { 
@@ -624,21 +460,23 @@
                 client_id: CLIENT_ID, scope: SCOPES, 
                 callback: (resp) => { 
                     if(resp.access_token) { 
-                        document.getElementById('btn-login').classList.add('hidden'); 
-                        document.getElementById('btn-sync').classList.remove('hidden');
-                        document.getElementById('btn-pull').classList.remove('hidden');
+                        localStorage.setItem('gdrive_token', resp.access_token);
+                        localStorage.setItem('gdrive_token_exp', Date.now() + (resp.expires_in * 1000));
+                        updateAuthUI(true);
                         loadFromDrive(true); 
                     } 
                 }
             }); 
+            isGisReady = true;
+            checkExistingAuth();
         }
 
         function handleAuthClick() { tokenClient.requestAccessToken({prompt: ''}); }
 
-        async function saveToDrive() {
+        async function saveToDriveCore(silent = false) {
             try {
                 const token = gapi.client.getToken()?.access_token;
-                if(!token) return alert('Conecta Google Drive primero.');
+                if(!token) return;
 
                 const fileName = "finanzapp_cloud.json";
                 const response = await gapi.client.drive.files.list({ q: `name = '${fileName}' and trashed = false`, fields: 'files(id, name)' });
@@ -653,11 +491,14 @@
                 await fetch(file ? `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: file ? 'PATCH' : 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
-                    body: fd
+                    body: fd,
+                    keepalive: true // Crucial para permitir que la subida continúe si se cierra la pestaña
                 });
-                alert("✓ Datos subidos con éxito");
-            } catch (err) { alert("Error al subir a Drive."); }
+                if(!silent) alert("✓ Datos subidos con éxito a Drive");
+            } catch (err) { if(!silent) alert("Error al subir a Drive."); }
         }
+
+        function saveToDriveBtn() { saveToDriveCore(false); }
 
         async function loadFromDrive(silent = false) {
             try {
@@ -678,6 +519,24 @@
                 } else if(!silent) { alert("No se encontró respaldo."); }
             } catch(err) {}
         }
+
+        async function handleSignOut() {
+            if(confirm("¿Respaldar en la nube y cerrar sesión de Drive?")) {
+                await saveToDriveCore(true); // Autoguarda antes de revocar
+                const token = gapi.client.getToken();
+                if (token !== null) { google.accounts.oauth2.revoke(token.access_token, () => {}); gapi.client.setToken(''); }
+                localStorage.removeItem('gdrive_token');
+                localStorage.removeItem('gdrive_token_exp');
+                updateAuthUI(false);
+            }
+        }
+
+        // Autoguardado inteligente al cerrar la app o cambiar de pestaña
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && gapi.client?.getToken()?.access_token) {
+                saveToDriveCore(true);
+            }
+        });
 
         window.onload = init;
     </script>
