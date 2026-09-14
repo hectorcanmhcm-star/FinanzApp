@@ -22,7 +22,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 7 - PRUEBA</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 8</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -47,17 +47,41 @@
                     <h2 id="val-paid" class="text-xl font-bold text-rose-500 mt-1">$0.00</h2>
                 </div>
             </div>
+            
             <div class="bg-slate-800 p-6 rounded-3xl text-white shadow-xl border border-slate-700">
                 <p class="text-indigo-300 text-xs font-bold uppercase tracking-wider">Saldo Disponible Real</p>
                 <h2 id="val-available" class="text-3xl font-bold mt-1 text-white">$0.00</h2>
-                <div class="mt-4 pt-4 border-t border-slate-700 space-y-2">
-                    <div class="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg">
-                        <span class="text-xs text-slate-300">DEUDA TOTAL TARJETAS:</span>
-                        <span id="val-debt" class="font-bold text-white text-sm"></span>
-                    </div>
-                    <div class="flex justify-between items-center bg-indigo-900/40 border border-indigo-500/30 p-2 rounded-lg">
-                        <span class="text-xs text-indigo-200">PAGO MES ESTIMADO (Global):</span>
-                        <span id="val-month" class="font-bold text-indigo-300 text-sm"></span>
+                
+                <!-- COMPARADOR GLOBAL -->
+                <div class="mt-5 pt-5 border-t border-slate-700">
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">Resumen Global de Tarjetas</h3>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- COLUMNA BANCOS (Suma de c.realDebt y c.realPay) -->
+                        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 flex flex-col gap-2">
+                            <span class="text-slate-400 text-[9px] uppercase tracking-wider font-bold text-center"><i class="fas fa-university mr-1"></i> Apps Bancos</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400 text-[10px]">Deuda:</span>
+                                <span id="val-real-debt" class="text-white text-sm font-semibold">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center border-t border-slate-700/50 pt-1.5">
+                                <span class="text-slate-400 text-[10px]">Pago Mes:</span>
+                                <span id="val-real-pay" class="text-rose-400 text-sm font-bold">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- COLUMNA APP (Calculada por la app) -->
+                        <div class="bg-indigo-900/20 p-3 rounded-xl border border-indigo-500/30 flex flex-col gap-2">
+                            <span class="text-indigo-300 text-[9px] uppercase tracking-wider font-bold text-center"><i class="fas fa-calculator mr-1"></i> Calculado</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-indigo-300/70 text-[10px]">Deuda:</span>
+                                <span id="val-debt" class="text-emerald-400 text-sm font-semibold">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center border-t border-indigo-500/30 pt-1.5">
+                                <span class="text-indigo-300/70 text-[10px]">Pago Mes:</span>
+                                <span id="val-month" class="text-indigo-300 text-sm font-bold">$0.00</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -330,8 +354,15 @@
             const totalPaid = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
             let totalExpensesOriginal = 0;
             let globalMonthReq = 0;
+            
+            // Variables para el total bancario
+            let globalRealDebt = 0;
+            let globalRealPay = 0;
 
             state.cards.forEach(c => {
+                globalRealDebt += parseFloat(c.realDebt || 0);
+                globalRealPay += parseFloat(c.realPay || 0);
+
                 const exps = state.expenses.filter(e => e.cardId === c.id);
                 exps.forEach(e => {
                     const total = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
@@ -341,9 +372,15 @@
             });
 
             const netDebt = Math.max(0, totalExpensesOriginal - totalPaid);
+            
+            // Actualizar Tarjetas Principales Dashboard
             document.getElementById('val-incomes').innerText = fmt(totalInc);
             document.getElementById('val-paid').innerText = fmt(totalPaid);
             document.getElementById('val-available').innerText = fmt(totalInc - totalPaid);
+            
+            // Actualizar Comparador Global
+            document.getElementById('val-real-debt').innerText = fmt(globalRealDebt);
+            document.getElementById('val-real-pay').innerText = fmt(globalRealPay);
             document.getElementById('val-debt').innerText = fmt(netDebt);
             document.getElementById('val-month').innerText = fmt(globalMonthReq);
 
