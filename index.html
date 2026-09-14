@@ -22,13 +22,13 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-slate-500 px-2 py-0.5 rounded-full shadow-sm">Uso Local</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 7 - PRUEBA</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
                 <button id="btn-sync" onclick="saveToDriveBtn()" class="hidden text-xs bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full font-semibold transition shadow flex items-center gap-1"><i class="fas fa-cloud-upload-alt"></i> Subir</button>
                 <button id="btn-pull" onclick="loadFromDrive(false)" class="hidden text-xs bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-full font-semibold transition shadow flex items-center gap-1"><i class="fas fa-cloud-download-alt"></i> Bajar</button>
-                <button id="btn-logout" onclick="handleSignOut()" class="hidden text-xs bg-rose-500 hover:bg-rose-600 px-3 py-1.5 rounded-full font-semibold transition shadow flex items-center" title="Cerrar sesión y volver al modo local"><i class="fas fa-sign-out-alt"></i></button>
+                <button id="btn-logout" onclick="handleSignOut()" class="hidden text-xs bg-rose-500 hover:bg-rose-600 px-3 py-1.5 rounded-full font-semibold transition shadow flex items-center" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
     </header>
@@ -47,18 +47,18 @@
                     <h2 id="val-paid" class="text-xl font-bold text-rose-500 mt-1">$0.00</h2>
                 </div>
             </div>
-            <div class="bg-slate-800 p-6 rounded-3xl text-white shadow-xl">
+            <div class="bg-slate-800 p-6 rounded-3xl text-white shadow-xl border border-slate-700">
                 <p class="text-indigo-300 text-xs font-bold uppercase tracking-wider">Saldo Disponible Real</p>
                 <h2 id="val-available" class="text-3xl font-bold mt-1 text-white">$0.00</h2>
-                <div class="mt-4 pt-4 border-t border-slate-700/80 space-y-1">
-                    <p class="text-xs text-slate-300 flex justify-between">
-                        <span>DEUDA TOTAL TARJETAS (Calculada):</span>
-                        <span id="val-debt" class="font-bold text-white"></span>
-                    </p>
-                    <p class="text-xs text-slate-300 flex justify-between">
-                        <span>REQUERIDO ESTE MES (Calculado):</span>
-                        <span id="val-month" class="font-bold text-indigo-400"></span>
-                    </p>
+                <div class="mt-4 pt-4 border-t border-slate-700 space-y-2">
+                    <div class="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg">
+                        <span class="text-xs text-slate-300">DEUDA TOTAL TARJETAS:</span>
+                        <span id="val-debt" class="font-bold text-white text-sm"></span>
+                    </div>
+                    <div class="flex justify-between items-center bg-indigo-900/40 border border-indigo-500/30 p-2 rounded-lg">
+                        <span class="text-xs text-indigo-200">PAGO MES ESTIMADO (Global):</span>
+                        <span id="val-month" class="font-bold text-indigo-300 text-sm"></span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -68,18 +68,18 @@
             <div class="flex justify-between items-center">
                 <h2 class="font-bold text-lg text-slate-800">Mis Tarjetas</h2>
                 <button onclick="openCardModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
-                    <i class="fas fa-plus"></i> Tarjeta
+                    <i class="fas fa-plus"></i> Nueva Tarjeta
                 </button>
             </div>
             <div id="list-cards" class="space-y-4"></div>
         </section>
 
-        <!-- SECCIÓN PAGOS/ABONOS -->
+        <!-- SECCIÓN PAGOS -->
         <section id="sec-payments" class="hidden space-y-4">
             <div class="flex justify-between items-center">
                 <h2 class="font-bold text-lg text-slate-800">Historial de Abonos</h2>
                 <button onclick="openPayModal()" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
-                    <i class="fas fa-plus"></i> Registrar Abono
+                    <i class="fas fa-plus"></i> Abonar
                 </button>
             </div>
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 divide-y divide-gray-100" id="list-payments"></div>
@@ -90,7 +90,7 @@
             <div class="flex justify-between items-center">
                 <h2 class="font-bold text-lg text-slate-800">Mis Ingresos</h2>
                 <button onclick="openIncomeModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
-                    <i class="fas fa-plus"></i> Nuevo
+                    <i class="fas fa-plus"></i> Ingreso
                 </button>
             </div>
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 divide-y divide-gray-100" id="list-incomes"></div>
@@ -98,7 +98,7 @@
 
     </main>
 
-    <!-- BARRA DE NAVEGACIÓN -->
+    <!-- NAVEGACIÓN -->
     <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around p-3 z-50 shadow-md">
         <button onclick="showSec('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-xs font-bold active-tab"><i class="fas fa-home text-lg mb-1"></i><span>Inicio</span></button>
         <button onclick="showSec('cards')" id="nav-cards" class="flex flex-col items-center text-xs font-bold text-gray-400"><i class="fas fa-credit-card text-lg mb-1"></i><span>Tarjetas</span></button>
@@ -127,16 +127,16 @@
                 </div>
             </div>
 
-            <!-- DATOS BANCARIOS REALES PARA COMPARAR -->
+            <!-- DATOS BANCO -->
             <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Datos según la App del Banco</p>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider"><i class="fas fa-university mr-1"></i> Datos App del Banco</p>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-[11px] font-semibold text-gray-500 block mb-1">Deuda Total ($)</label>
                         <input type="number" step="0.01" id="c-real-debt" placeholder="0.00" class="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
-                        <label class="text-[11px] font-semibold text-gray-500 block mb-1">Pago del Mes ($)</label>
+                        <label class="text-[11px] font-semibold text-gray-500 block mb-1">Pago para no generar int. ($)</label>
                         <input type="number" step="0.01" id="c-real-pay" placeholder="0.00" class="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
@@ -160,31 +160,30 @@
         </div>
     </div>
 
-    <!-- MODAL COMPRA -->
+    <!-- MODAL COMPRA / DEUDA -->
     <div id="modal-exp" class="modal-bg">
         <div class="modal-content space-y-4">
-            <h3 id="modal-exp-title" class="font-bold text-lg text-slate-800">Registrar Compra / Deuda</h3>
+            <h3 id="modal-exp-title" class="font-bold text-lg text-slate-800">Registrar Movimiento</h3>
             <input type="hidden" id="e-id">
             <input type="hidden" id="exp-card-id">
             
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto / Descripción</label>
-                <input type="text" id="e-desc" placeholder="Ej. Despensa, Tenis..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="e-desc" placeholder="Ej. Despensa, Deuda anterior..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
 
-            <!-- NUEVO: TIPO DE MOVIMIENTO Y ESTADO -->
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Clasificación</label>
-                    <select id="e-class" class="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="compra">Compra / Pago Nuevo</option>
+                    <select id="e-class" class="w-full p-3 bg-gray-100 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
+                        <option value="compra">Compra Nueva</option>
                         <option value="deuda">Deuda Anterior</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">En estado de cuenta</label>
-                    <select id="e-status" class="w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="new">Nueva (No refleja)</option>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Estado de Cuenta</label>
+                    <select id="e-status" class="w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
+                        <option value="new">Nueva (Aún no refleja)</option>
                         <option value="reflected">Ya Reflejada</option>
                     </select>
                 </div>
@@ -192,19 +191,19 @@
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label>
-                    <input type="number" step="0.01" id="e-amount" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto Total ($)</label>
+                    <input type="number" step="0.01" id="e-amount" oninput="updateSimMonthly()" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha compra</label>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha de compra</label>
                     <input type="date" id="e-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
                 </div>
             </div>
             
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Modalidad de pago</label>
-                <select id="e-type" onchange="document.getElementById('msi-div').classList.toggle('hidden', this.value=='contado')" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="contado">Contado</option>
+                <select id="e-type" onchange="toggleMsiDiv(this.value)" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="contado">Contado (1 solo pago)</option>
                     <option value="msi">Meses (MSI / Intereses)</option>
                 </select>
             </div>
@@ -212,12 +211,18 @@
             <div id="msi-div" class="hidden grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Meses</label>
-                    <input type="number" id="e-months" placeholder="Plazo" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="number" id="e-months" oninput="updateSimMonthly()" placeholder="Plazo" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Interés %</label>
-                    <input type="number" step="0.1" id="e-int" placeholder="0" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value="0">
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Interés Total %</label>
+                    <input type="number" step="0.1" id="e-int" oninput="updateSimMonthly()" placeholder="0" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value="0">
                 </div>
+            </div>
+
+            <!-- SIMULADOR MENSUAL -->
+            <div id="sim-monthly-box" class="p-3 bg-indigo-50 rounded-xl border border-indigo-200 flex justify-between items-center text-indigo-900 shadow-sm mt-2">
+                <span class="text-xs font-semibold"><i class="fas fa-calculator mr-1"></i> Aporte Mensual:</span>
+                <span id="sim-monthly-val" class="font-bold text-indigo-700 text-lg">$0.00</span>
             </div>
             
             <div class="flex gap-2 pt-2">
@@ -227,7 +232,7 @@
         </div>
     </div>
 
-    <!-- MODAL PAGO/ABONO -->
+    <!-- MODAL PAGO -->
     <div id="modal-pay" class="modal-bg">
         <div class="modal-content space-y-4">
             <h3 id="modal-pay-title" class="font-bold text-lg text-slate-800">Registrar Abono</h3>
@@ -238,11 +243,11 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha de pago</label>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label>
                     <input type="date" id="p-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-400 text-xs">
                 </div>
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto abonado ($)</label>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label>
                     <input type="number" step="0.01" id="p-amount" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-400">
                 </div>
             </div>
@@ -260,7 +265,7 @@
             <input type="hidden" id="i-id">
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto o Fuente</label>
-                <input type="text" id="i-desc" placeholder="Ej. Nómina, Beca, Venta..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                <input type="text" id="i-desc" placeholder="Ej. Nómina..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
             </div>
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Frecuencia</label>
@@ -354,6 +359,12 @@
                     const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
 
+                    // CÁLCULO MES TARJETA
+                    const cardMonthReq = myExps.reduce((acc, e) => {
+                        const total = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
+                        return acc + (total / (parseInt(e.months) || 1));
+                    }, 0);
+
                     const numIdentifier = c.num ? `<span class="text-indigo-200 ml-1 font-mono text-[10px]">• ${c.num}</span>` : '';
 
                     return `
@@ -366,58 +377,92 @@
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="editCard(${c.id})" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg text-slate-200 transition"><i class="fas fa-pen"></i></button>
-                                    <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition shadow flex items-center gap-1"><i class="fas fa-plus"></i> Compra</button>
+                                    <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition shadow flex items-center gap-1"><i class="fas fa-plus"></i> Registrar</button>
                                 </div>
                             </div>
                             
+                            <!-- TABLA DE COMPARACIÓN EXACTA: BANCO VS APP (MEJORADA VISUALMENTE) -->
                             <div class="mt-4 pt-4 border-t border-slate-700/80 flex flex-col gap-3">
-                                <div class="flex justify-between text-xs">
-                                    <span class="text-slate-300">Corte: <b class="text-white">Día ${c.cut || '--'}</b></span>
-                                    <span class="text-slate-300">Pago: <b class="text-indigo-300">Día ${c.pay || '--'}</b></span>
+                                <div class="flex justify-between text-xs px-1">
+                                    <span class="text-slate-300">Corte: <b class="text-white bg-slate-700 px-2 py-0.5 rounded">Día ${c.cut || '--'}</b></span>
+                                    <span class="text-slate-300">Pago: <b class="text-indigo-200 bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-500/30">Día ${c.pay || '--'}</b></span>
                                 </div>
                                 
-                                <div class="grid grid-cols-2 gap-2 text-xs">
-                                    <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-700">
-                                        <span class="text-slate-400 text-[9px] block mb-1 uppercase tracking-wider">Según App Banco</span>
-                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Deuda:</span> <b class="text-white">${fmt(c.realDebt)}</b></div>
-                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Pago Mes:</span> <b class="text-rose-400">${fmt(c.realPay)}</b></div>
+                                <div class="grid grid-cols-2 gap-3 mt-1">
+                                    <!-- COLUMNA BANCO -->
+                                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 flex flex-col gap-2">
+                                        <span class="text-slate-400 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-mobile-alt mr-1"></i> App del Banco</span>
+                                        <div class="flex flex-col">
+                                            <span class="text-slate-400 text-[10px]">Deuda Total:</span>
+                                            <span class="text-white text-sm font-semibold">${fmt(c.realDebt)}</span>
+                                        </div>
+                                        <div class="flex flex-col border-t border-slate-700/50 pt-1.5">
+                                            <span class="text-slate-400 text-[10px]">Pago p/no int:</span>
+                                            <span class="text-rose-400 text-sm font-bold">${fmt(c.realPay)}</span>
+                                        </div>
                                     </div>
-                                    <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-700">
-                                        <span class="text-slate-400 text-[9px] block mb-1 uppercase tracking-wider">Calculado App</span>
-                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Deuda:</span> <b class="text-emerald-400">${fmt(cardCurrentDebt)}</b></div>
-                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Compras:</span> <b class="text-white">${fmt(cardGrossDebt)}</b></div>
+                                    <!-- COLUMNA CALCULADA -->
+                                    <div class="bg-indigo-900/20 p-3 rounded-xl border border-indigo-500/30 flex flex-col gap-2">
+                                        <span class="text-indigo-300 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-calculator mr-1"></i> Calculado aquí</span>
+                                        <div class="flex flex-col">
+                                            <span class="text-indigo-300/70 text-[10px]">Deuda Restante:</span>
+                                            <span class="text-emerald-400 text-sm font-semibold">${fmt(cardCurrentDebt)}</span>
+                                        </div>
+                                        <div class="flex flex-col border-t border-indigo-500/30 pt-1.5">
+                                            <span class="text-indigo-300/70 text-[10px]">PAGO MES ESTIMADO:</span>
+                                            <span class="text-indigo-300 text-lg font-bold">${fmt(cardMonthReq)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="p-4 space-y-2">
-                            <p class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Desglose de compras / deudas</p>
+                            <p class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Desglose de Movimientos</p>
                             ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Sin registros</p>' : ''}
                             ${myExps.map(e => {
                                 const statusBadge = e.status === 'reflected' 
-                                    ? `<span class="text-[8px] px-1.5 py-0.5 rounded-sm uppercase tracking-wide bg-emerald-100 text-emerald-700 border border-emerald-200">Reflejada</span>` 
-                                    : `<span class="text-[8px] px-1.5 py-0.5 rounded-sm uppercase tracking-wide bg-amber-100 text-amber-700 border border-amber-200">Nueva</span>`;
+                                    ? `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 font-bold border border-emerald-200">Reflejada</span>` 
+                                    : `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 font-bold border border-amber-200">Nueva</span>`;
                                 
                                 const classBadge = e.classification === 'deuda'
-                                    ? `<span class="text-[8px] px-1.5 py-0.5 rounded-sm uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">Deuda Ant.</span>`
-                                    : `<span class="text-[8px] px-1.5 py-0.5 rounded-sm uppercase tracking-wide bg-blue-100 text-blue-700 border border-blue-200">Compra/Pago</span>`;
+                                    ? `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-slate-100 text-slate-600 font-bold border border-slate-200">Deuda Ant.</span>`
+                                    : `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 font-bold border border-blue-200">Compra</span>`;
+
+                                const totalConInt = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
+                                const cuotaMensual = totalConInt / (parseInt(e.months) || 1);
+
+                                const planText = e.type === 'msi' 
+                                    ? `<b class="text-indigo-600 bg-indigo-50 px-1 rounded">${fmt(cuotaMensual)}/m</b> (${e.months}m)` 
+                                    : '<span class="bg-gray-100 px-1 rounded text-gray-500">Contado</span>';
 
                                 return `
-                                <div class="flex justify-between items-center text-xs py-2 border-b border-gray-50 last:border-none">
-                                    <div>
-                                        <p class="font-semibold text-slate-700 flex items-center gap-1.5 flex-wrap mb-0.5">${e.desc} ${classBadge} ${statusBadge}</p>
-                                        <span class="text-[10px] text-gray-400"><i class="far fa-calendar-alt"></i> ${e.date || 'Sin fecha'} • ${e.type === 'msi' ? `${e.months} m` : 'Contado'}</span>
+                                <div class="flex justify-between items-center text-xs py-3 border-b border-gray-100 last:border-none">
+                                    <div class="flex-1 pr-2">
+                                        <div class="flex flex-wrap gap-1 mb-1 items-center">
+                                            <p class="font-bold text-slate-700 mr-1">${e.desc}</p>
+                                            ${classBadge} ${statusBadge}
+                                        </div>
+                                        <div class="text-[11px] text-gray-500 flex items-center gap-2">
+                                            <span><i class="far fa-calendar-alt"></i> ${e.date || '--'}</span>
+                                            <span>•</span>
+                                            <span>${planText}</span>
+                                        </div>
                                     </div>
                                     <div class="flex items-center gap-3">
-                                        <span class="font-bold text-slate-800">${fmt(e.amount)}</span>
-                                        <button onclick="editExp(${e.id})" class="text-blue-500 p-1"><i class="fas fa-edit"></i></button>
-                                        <button onclick="del('expenses', ${e.id})" class="text-rose-400 p-1"><i class="fas fa-trash"></i></button>
+                                        <div class="text-right">
+                                            <span class="font-bold text-slate-800 block leading-tight">${fmt(e.amount)}</span>
+                                            ${e.interest > 0 ? `<span class="text-[9px] text-rose-400">+${e.interest}% int.</span>` : ''}
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <button onclick="editExp(${e.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded hover:bg-blue-100"><i class="fas fa-edit"></i></button>
+                                            <button onclick="del('expenses', ${e.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded hover:bg-rose-100"><i class="fas fa-trash"></i></button>
+                                        </div>
                                     </div>
                                 </div>
                                 `;
                             }).join('')}
-                            <div class="pt-3 border-t border-gray-100 flex justify-end"><button onclick="del('cards', ${c.id})" class="text-xs text-rose-500 hover:underline">Eliminar tarjeta</button></div>
+                            <div class="pt-4 flex justify-end"><button onclick="del('cards', ${c.id})" class="text-[10px] text-rose-500 font-semibold hover:underline"><i class="fas fa-times-circle"></i> Eliminar tarjeta</button></div>
                         </div>
                     </div>`;
                 }).join('');
@@ -448,6 +493,23 @@
 
         function showSec(id) { ['dashboard', 'cards', 'payments', 'incomes'].forEach(s => { document.getElementById('sec-'+s).classList.toggle('hidden', s !== id); document.getElementById('nav-'+s).classList.toggle('active-tab', s === id); }); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- CÁLCULO EN VIVO DEL SIMULADOR MENSUAL ---
+        function toggleMsiDiv(type) {
+            document.getElementById('msi-div').classList.toggle('hidden', type === 'contado');
+            updateSimMonthly();
+        }
+
+        function updateSimMonthly() {
+            const amount = parseFloat(document.getElementById('e-amount').value) || 0;
+            const type = document.getElementById('e-type').value;
+            const months = type === 'contado' ? 1 : (parseInt(document.getElementById('e-months').value) || 1);
+            const interest = type === 'contado' ? 0 : (parseFloat(document.getElementById('e-int').value) || 0);
+
+            const total = amount * (1 + (interest / 100));
+            const monthly = total / months;
+            document.getElementById('sim-monthly-val').innerText = fmt(monthly) + (months > 1 ? ` / mes` : '');
+        }
 
         // --- FUNCIONES CRUD TARJETAS ---
         function openCardModal() { 
@@ -501,26 +563,27 @@
 
         // --- FUNCIONES CRUD COMPRAS / DEUDAS ---
         function openExpModal(cardId) { 
-            document.getElementById('modal-exp-title').innerText = "Registrar Compra / Deuda"; 
+            document.getElementById('modal-exp-title').innerText = "Registrar Movimiento"; 
             document.getElementById('e-id').value = ''; 
             document.getElementById('exp-card-id').value = cardId; 
             document.getElementById('e-desc').value = ''; 
             document.getElementById('e-class').value = 'compra';
             document.getElementById('e-status').value = 'new';
-            document.getElementById('e-status').className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+            document.getElementById('e-status').className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
             document.getElementById('e-amount').value = ''; 
             document.getElementById('e-date').value = getTodayString(); 
             document.getElementById('e-type').value = 'contado'; 
             document.getElementById('e-months').value = '1'; 
             document.getElementById('e-int').value = '0'; 
             document.getElementById('msi-div').classList.add('hidden'); 
+            updateSimMonthly();
             document.getElementById('modal-exp').style.display = 'flex'; 
         }
 
         function editExp(id) { 
             const e = state.expenses.find(x => x.id === Number(id)); 
             if(!e) return; 
-            document.getElementById('modal-exp-title').innerText = "Editar Compra / Deuda"; 
+            document.getElementById('modal-exp-title').innerText = "Editar Movimiento"; 
             document.getElementById('e-id').value = e.id; 
             document.getElementById('exp-card-id').value = e.cardId; 
             document.getElementById('e-desc').value = e.desc; 
@@ -529,9 +592,9 @@
             
             const statusSelect = document.getElementById('e-status');
             if(e.status === 'reflected') {
-                statusSelect.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+                statusSelect.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
             } else {
-                statusSelect.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+                statusSelect.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
             }
 
             document.getElementById('e-amount').value = e.amount; 
@@ -540,14 +603,15 @@
             document.getElementById('e-months').value = e.months || 1; 
             document.getElementById('e-int').value = e.interest || 0; 
             document.getElementById('msi-div').classList.toggle('hidden', e.type !== 'msi'); 
+            updateSimMonthly();
             document.getElementById('modal-exp').style.display = 'flex'; 
         }
 
         document.getElementById('e-status').addEventListener('change', function() {
             if(this.value === 'reflected') {
-                this.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+                this.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
             } else {
-                this.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+                this.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
             }
         });
 
@@ -593,10 +657,10 @@
             const badge = document.getElementById('mode-badge');
             if(isLoggedIn) {
                 badge.innerText = 'Conectado a Drive';
-                badge.className = 'text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full shadow-sm';
+                badge.className = 'text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full shadow-sm font-bold';
             } else {
                 badge.innerText = 'Uso Local';
-                badge.className = 'text-[10px] bg-slate-500 px-2 py-0.5 rounded-full shadow-sm';
+                badge.className = 'text-[10px] bg-slate-500 px-2 py-0.5 rounded-full shadow-sm font-bold';
             }
         }
 
