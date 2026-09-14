@@ -115,9 +115,15 @@
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Nombre de la tarjeta</label>
                 <input type="text" id="c-name" placeholder="Ej. Banamex Naranja" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
-            <div>
-                <label class="text-[11px] font-semibold text-gray-500 block mb-1">Institución / Banco</label>
-                <input type="text" id="c-bank" placeholder="Ej. Citibanamex" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Institución / Banco</label>
+                    <input type="text" id="c-bank" placeholder="Ej. Citibanamex" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Núm. Identificador</label>
+                    <input type="text" id="c-num" placeholder="Ej. 1234" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
@@ -252,7 +258,6 @@
         function getEmptyState() { return { cards: [], expenses: [], payments: [], incomes: [] }; }
 
         function init() {
-            // Siempre inicia cargando el Perfil Local
             loadLocalProfile();
         }
 
@@ -268,8 +273,6 @@
 
         function save() {
             const token = typeof gapi !== 'undefined' && gapi.client && gapi.client.getToken()?.access_token;
-            
-            // Si está conectado, guarda en la sesión (Nube). Si no, guarda permanentemente en Local.
             if(token) {
                 sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state));
             } else {
@@ -313,11 +316,17 @@
                     const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
 
+                    // Formato visual para el número de tarjeta (Identificador)
+                    const numIdentifier = c.num ? `<span class="text-indigo-200 ml-1 font-mono text-[10px]">• ${c.num}</span>` : '';
+
                     return `
                     <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
                         <div class="bg-slate-800 p-4 text-white">
                             <div class="flex justify-between items-start">
-                                <div><h3 class="font-bold text-base leading-tight">${c.name}</h3><p class="text-[11px] text-slate-300">${c.bank || 'Sin banco'}</p></div>
+                                <div>
+                                    <h3 class="font-bold text-base leading-tight">${c.name}</h3>
+                                    <p class="text-[11px] text-slate-300 mt-0.5">${c.bank || 'Sin banco'} ${numIdentifier}</p>
+                                </div>
                                 <div class="flex gap-2">
                                     <button onclick="editCard(${c.id})" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg text-slate-200 transition"><i class="fas fa-pen"></i></button>
                                     <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition shadow flex items-center gap-1"><i class="fas fa-plus"></i> Compra</button>
@@ -361,9 +370,10 @@
             const divPayments = document.getElementById('list-payments');
             divPayments.innerHTML = state.payments.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay abonos registrados.</div>` : state.payments.map(p => {
                 const card = state.cards.find(c => c.id === p.cardId);
+                const numIdentifier = card && card.num ? ` (${card.num})` : '';
                 return `
                 <div class="p-4 flex justify-between items-center text-xs">
-                    <div><span class="font-bold text-slate-800">${card ? card.name : 'Tarjeta eliminada'}</span><p class="text-[10px] text-gray-400"><i class="far fa-calendar-alt"></i> ${p.date || 'Sin fecha'}</p></div>
+                    <div><span class="font-bold text-slate-800">${card ? card.name + numIdentifier : 'Tarjeta eliminada'}</span><p class="text-[10px] text-gray-400"><i class="far fa-calendar-alt"></i> ${p.date || 'Sin fecha'}</p></div>
                     <div class="flex gap-3 items-center"><span class="font-bold text-rose-500 text-sm">-${fmt(p.amount)}</span><button onclick="editPay(${p.id})" class="text-blue-500"><i class="fas fa-edit"></i></button><button onclick="del('payments', ${p.id})" class="text-rose-400"><i class="fas fa-trash"></i></button></div>
                 </div>`;
             }).join('');
@@ -372,15 +382,56 @@
         function showSec(id) { ['dashboard', 'cards', 'payments', 'incomes'].forEach(s => { document.getElementById('sec-'+s).classList.toggle('hidden', s !== id); document.getElementById('nav-'+s).classList.toggle('active-tab', s === id); }); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // Funciones CRUD
-        function openCardModal() { document.getElementById('modal-card-title').innerText = "Nueva Tarjeta"; document.getElementById('c-id').value = ''; document.getElementById('c-name').value = ''; document.getElementById('c-bank').value = ''; document.getElementById('c-cut').value = ''; document.getElementById('c-pay').value = ''; document.getElementById('modal-card').style.display = 'flex'; }
-        function editCard(id) { const c = state.cards.find(x => x.id === Number(id)); if(!c) return; document.getElementById('modal-card-title').innerText = "Editar Tarjeta"; document.getElementById('c-id').value = c.id; document.getElementById('c-name').value = c.name; document.getElementById('c-bank').value = c.bank || ''; document.getElementById('c-cut').value = c.cut || ''; document.getElementById('c-pay').value = c.pay || ''; document.getElementById('modal-card').style.display = 'flex'; }
-        function saveCard() { const id = document.getElementById('c-id').value; const name = document.getElementById('c-name').value.trim(); const bank = document.getElementById('c-bank').value.trim(); const cut = parseInt(document.getElementById('c-cut').value) || ''; const pay = parseInt(document.getElementById('c-pay').value) || ''; if(!name) return alert('Ingresa nombre'); if(id) { const c = state.cards.find(x => x.id === Number(id)); if(c) { c.name = name; c.bank = bank; c.cut = cut; c.pay = pay; } } else { state.cards.push({ id: Date.now(), name, bank, cut, pay }); } save(); closeModal('modal-card'); }
+        // --- FUNCIONES CRUD TARJETAS CON NUEVO CAMPO 'NUM' ---
+        function openCardModal() { 
+            document.getElementById('modal-card-title').innerText = "Nueva Tarjeta"; 
+            document.getElementById('c-id').value = ''; 
+            document.getElementById('c-name').value = ''; 
+            document.getElementById('c-bank').value = ''; 
+            document.getElementById('c-num').value = ''; 
+            document.getElementById('c-cut').value = ''; 
+            document.getElementById('c-pay').value = ''; 
+            document.getElementById('modal-card').style.display = 'flex'; 
+        }
+
+        function editCard(id) { 
+            const c = state.cards.find(x => x.id === Number(id)); 
+            if(!c) return; 
+            document.getElementById('modal-card-title').innerText = "Editar Tarjeta"; 
+            document.getElementById('c-id').value = c.id; 
+            document.getElementById('c-name').value = c.name; 
+            document.getElementById('c-bank').value = c.bank || ''; 
+            document.getElementById('c-num').value = c.num || ''; 
+            document.getElementById('c-cut').value = c.cut || ''; 
+            document.getElementById('c-pay').value = c.pay || ''; 
+            document.getElementById('modal-card').style.display = 'flex'; 
+        }
+
+        function saveCard() { 
+            const id = document.getElementById('c-id').value; 
+            const name = document.getElementById('c-name').value.trim(); 
+            const bank = document.getElementById('c-bank').value.trim(); 
+            const num = document.getElementById('c-num').value.trim(); 
+            const cut = parseInt(document.getElementById('c-cut').value) || ''; 
+            const pay = parseInt(document.getElementById('c-pay').value) || ''; 
+            
+            if(!name) return alert('Ingresa nombre de la tarjeta'); 
+            
+            if(id) { 
+                const c = state.cards.find(x => x.id === Number(id)); 
+                if(c) { c.name = name; c.bank = bank; c.num = num; c.cut = cut; c.pay = pay; } 
+            } else { 
+                state.cards.push({ id: Date.now(), name, bank, num, cut, pay }); 
+            } 
+            save(); closeModal('modal-card'); 
+        }
+
+        // Otras Funciones CRUD
         function openExpModal(cardId) { document.getElementById('modal-exp-title').innerText = "Registrar Compra"; document.getElementById('e-id').value = ''; document.getElementById('exp-card-id').value = cardId; document.getElementById('e-desc').value = ''; document.getElementById('e-amount').value = ''; document.getElementById('e-date').value = getTodayString(); document.getElementById('e-type').value = 'contado'; document.getElementById('e-months').value = '1'; document.getElementById('e-int').value = '0'; document.getElementById('msi-div').classList.add('hidden'); document.getElementById('modal-exp').style.display = 'flex'; }
         function editExp(id) { const e = state.expenses.find(x => x.id === Number(id)); if(!e) return; document.getElementById('modal-exp-title').innerText = "Editar Compra"; document.getElementById('e-id').value = e.id; document.getElementById('exp-card-id').value = e.cardId; document.getElementById('e-desc').value = e.desc; document.getElementById('e-amount').value = e.amount; document.getElementById('e-date').value = e.date || getTodayString(); document.getElementById('e-type').value = e.type || 'contado'; document.getElementById('e-months').value = e.months || 1; document.getElementById('e-int').value = e.interest || 0; document.getElementById('msi-div').classList.toggle('hidden', e.type !== 'msi'); document.getElementById('modal-exp').style.display = 'flex'; }
         function saveExp() { const id = document.getElementById('e-id').value; const cardId = parseInt(document.getElementById('exp-card-id').value); const desc = document.getElementById('e-desc').value.trim() || 'Compra'; const amount = parseFloat(document.getElementById('e-amount').value) || 0; const date = document.getElementById('e-date').value || getTodayString(); const type = document.getElementById('e-type').value; const months = parseInt(document.getElementById('e-months').value) || 1; const interest = parseFloat(document.getElementById('e-int').value) || 0; if(amount <= 0) return alert('Ingresa monto válido'); if(id) { const exp = state.expenses.find(x => x.id === Number(id)); if(exp) { exp.desc = desc; exp.amount = amount; exp.date = date; exp.type = type; exp.months = months; exp.interest = interest; } } else { state.expenses.push({ id: Date.now(), cardId, desc, amount, date, type, months, interest }); } save(); closeModal('modal-exp'); }
-        function openPayModal() { if(state.cards.length === 0) return alert('Primero registra tarjeta'); document.getElementById('modal-pay-title').innerText = "Registrar Abono"; document.getElementById('p-id').value = ''; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('p-date').value = getTodayString(); document.getElementById('p-amount').value = ''; document.getElementById('modal-pay').style.display = 'flex'; }
-        function editPay(id) { const p = state.payments.find(x => x.id === Number(id)); if(!p) return; document.getElementById('modal-pay-title').innerText = "Editar Abono"; document.getElementById('p-id').value = p.id; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name}</option>`).join(''); document.getElementById('p-date').value = p.date || getTodayString(); document.getElementById('p-amount').value = p.amount; document.getElementById('modal-pay').style.display = 'flex'; }
+        function openPayModal() { if(state.cards.length === 0) return alert('Primero registra tarjeta'); document.getElementById('modal-pay-title').innerText = "Registrar Abono"; document.getElementById('p-id').value = ''; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name} ${c.num ? '('+c.num+')' : ''}</option>`).join(''); document.getElementById('p-date').value = getTodayString(); document.getElementById('p-amount').value = ''; document.getElementById('modal-pay').style.display = 'flex'; }
+        function editPay(id) { const p = state.payments.find(x => x.id === Number(id)); if(!p) return; document.getElementById('modal-pay-title').innerText = "Editar Abono"; document.getElementById('p-id').value = p.id; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name} ${c.num ? '('+c.num+')' : ''}</option>`).join(''); document.getElementById('p-date').value = p.date || getTodayString(); document.getElementById('p-amount').value = p.amount; document.getElementById('modal-pay').style.display = 'flex'; }
         function savePay() { const id = document.getElementById('p-id').value; const cardId = parseInt(document.getElementById('p-card').value); const date = document.getElementById('p-date').value || getTodayString(); const amount = parseFloat(document.getElementById('p-amount').value) || 0; if(amount <= 0) return alert('Ingresa abono válido'); if(id) { const p = state.payments.find(x => x.id === Number(id)); if(p) { p.cardId = cardId; p.date = date; p.amount = amount; } } else { state.payments.push({ id: Date.now(), cardId, date, amount }); } save(); closeModal('modal-pay'); }
         function openIncomeModal() { document.getElementById('modal-income-title').innerText = "Nuevo Ingreso"; document.getElementById('i-id').value = ''; document.getElementById('i-desc').value = ''; document.getElementById('i-amount').value = ''; document.getElementById('i-frequency').value = 'monthly'; document.getElementById('i-date').value = getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
         function editIncome(id) { const i = state.incomes.find(x => x.id === Number(id)); if(!i) return; document.getElementById('modal-income-title').innerText = "Editar Ingreso"; document.getElementById('i-id').value = i.id; document.getElementById('i-desc').value = i.desc; document.getElementById('i-amount').value = i.amount; document.getElementById('i-frequency').value = i.frequency || 'monthly'; document.getElementById('i-date').value = i.date || getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
@@ -412,12 +463,11 @@
                     gapi.client.setToken({ access_token: token });
                     updateAuthUI(true);
                     
-                    // Al restaurar sesión, cargamos la memoria temporal de la nube (Pausando Local)
                     const sessionData = sessionStorage.getItem('finanz_data_cloud_session');
                     if (sessionData) {
                         try { state = JSON.parse(sessionData); render(); } catch(e){}
                     } else {
-                        loadFromDrive(true); // Carga silenciosa si se perdió la memoria de pestaña
+                        loadFromDrive(true); 
                     }
                 }
             }
@@ -433,9 +483,6 @@
                         localStorage.setItem('gdrive_token', resp.access_token);
                         localStorage.setItem('gdrive_token_exp', Date.now() + (resp.expires_in * 1000));
                         updateAuthUI(true);
-                        
-                        // Si el usuario acaba de iniciar sesión manualmente, preguntamos si quiere cargar de Drive (sobrescribir pantalla)
-                        // o mantener lo que ya escribió en local para subirlo.
                         loadFromDrive(false, true); 
                     } 
                 }
@@ -494,7 +541,6 @@
                             sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state));
                             render(); 
                         } else if (isJustLoggedIn) {
-                            // Si decidió no cargar la nube para mantener su info local, la guardamos en la sesión de nube actual
                             sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state));
                         }
                     }
@@ -502,7 +548,6 @@
             } catch(err) {}
         }
 
-        // CIERRE DE SESIÓN: Restaura el Perfil Local
         async function handleSignOut() {
             if(confirm("¿Cerrar sesión?\n\nSe respaldará tu información en la nube y volverás a tu perfil de Uso Local.")) {
                 await saveToDriveCore(true);
@@ -515,7 +560,7 @@
                 sessionStorage.removeItem('finanz_data_cloud_session');
                 
                 updateAuthUI(false);
-                loadLocalProfile(); // Regresamos la app al estado del Local Host
+                loadLocalProfile();
             }
         }
 
