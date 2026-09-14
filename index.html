@@ -11,7 +11,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .modal-bg { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 100; }
         .modal-content { background: white; width: 92%; max-width: 440px; padding: 1.5rem; border-radius: 1.5rem; max-height: 90vh; overflow-y: auto; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .active-tab { color: #4f46e5 !important; border-top: 2px solid #4f46e5; }
     </style>
 </head>
@@ -21,16 +21,12 @@
     <header class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <h1 class="font-bold text-lg flex items-center gap-2">
-                <i class="fas fa-wallet text-indigo-200"></i> FinanzApp Pro
+                <i class="fas fa-wallet text-indigo-200"></i> FinanzApp Pro <span class="text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full">v5 Actualizado</span>
             </h1>
             <div class="flex gap-2">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
-                <button id="btn-sync" onclick="saveToDrive()" class="hidden text-xs bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full font-semibold transition flex items-center gap-1 shadow">
-                    <i class="fas fa-cloud-upload-alt"></i> Sincronizar
-                </button>
-                <button id="btn-pull" onclick="loadFromDrive()" class="hidden text-xs bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-full font-semibold transition flex items-center gap-1 shadow">
-                    <i class="fas fa-cloud-download-alt"></i> Descargar
-                </button>
+                <button id="btn-sync" onclick="saveToDrive()" class="hidden text-xs bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full font-semibold transition flex items-center gap-1 shadow"><i class="fas fa-cloud-upload-alt"></i> Subir</button>
+                <button id="btn-pull" onclick="loadFromDrive()" class="hidden text-xs bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-full font-semibold transition flex items-center gap-1 shadow"><i class="fas fa-cloud-download-alt"></i> Bajar</button>
             </div>
         </div>
     </header>
@@ -102,13 +98,13 @@
 
     <!-- BARRA DE NAVEGACIÓN -->
     <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around p-3 z-50 shadow-md">
-        <button onclick="showSec('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-xs font-bold active-tab"><i class="fas fa-home text-lg"></i><span>Inicio</span></button>
-        <button onclick="showSec('cards')" id="nav-cards" class="flex flex-col items-center text-xs font-bold text-gray-400"><i class="fas fa-credit-card text-lg"></i><span>Tarjetas</span></button>
-        <button onclick="showSec('payments')" id="nav-payments" class="flex flex-col items-center text-xs font-bold text-gray-400"><i class="fas fa-hand-holding-usd text-lg"></i><span>Abonos</span></button>
-        <button onclick="showSec('incomes')" id="nav-incomes" class="flex flex-col items-center text-xs font-bold text-gray-400"><i class="fas fa-wallet text-lg"></i><span>Ingresos</span></button>
+        <button onclick="showSec('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-xs font-bold active-tab"><i class="fas fa-home text-lg mb-1"></i><span>Inicio</span></button>
+        <button onclick="showSec('cards')" id="nav-cards" class="flex flex-col items-center text-xs font-bold text-gray-400"><i class="fas fa-credit-card text-lg mb-1"></i><span>Tarjetas</span></button>
+        <button onclick="showSec('payments')" id="nav-payments" class="flex flex-col items-center text-xs font-bold text-gray-400"><i class="fas fa-hand-holding-usd text-lg mb-1"></i><span>Abonos</span></button>
+        <button onclick="showSec('incomes')" id="nav-incomes" class="flex flex-col items-center text-xs font-bold text-gray-400"><i class="fas fa-wallet text-lg mb-1"></i><span>Ingresos</span></button>
     </nav>
 
-    <!-- MODAL TARJETA (CREAR / EDITAR) -->
+    <!-- MODAL TARJETA -->
     <div id="modal-card" class="modal-bg">
         <div class="modal-content space-y-4">
             <h3 id="modal-card-title" class="font-bold text-lg text-slate-800">Tarjeta</h3>
@@ -124,11 +120,11 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Día de corte</label>
-                    <input type="number" id="c-cut" min="1" max="31" placeholder="Día (ej. 15)" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="number" id="c-cut" min="1" max="31" placeholder="Ej. 15" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Día límite de pago</label>
-                    <input type="number" id="c-pay" min="1" max="31" placeholder="Día (ej. 5)" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Día límite pago</label>
+                    <input type="number" id="c-pay" min="1" max="31" placeholder="Ej. 5" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>
             <div class="flex gap-2 pt-2">
@@ -138,7 +134,7 @@
         </div>
     </div>
 
-    <!-- MODAL COMPRA (CREAR / EDITAR) -->
+    <!-- MODAL COMPRA -->
     <div id="modal-exp" class="modal-bg">
         <div class="modal-content space-y-4">
             <h3 id="modal-exp-title" class="font-bold text-lg text-slate-800">Registrar Compra</h3>
@@ -171,7 +167,7 @@
                     <input type="number" id="e-months" placeholder="Plazo" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Interés Total %</label>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Interés %</label>
                     <input type="number" step="0.1" id="e-int" placeholder="0" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value="0">
                 </div>
             </div>
@@ -182,18 +178,18 @@
         </div>
     </div>
 
-    <!-- MODAL PAGO / ABONO (CREAR / EDITAR) -->
+    <!-- MODAL PAGO/ABONO -->
     <div id="modal-pay" class="modal-bg">
         <div class="modal-content space-y-4">
             <h3 id="modal-pay-title" class="font-bold text-lg text-slate-800">Registrar Abono</h3>
             <input type="hidden" id="p-id">
             <div>
-                <label class="text-[11px] font-semibold text-gray-500 block mb-1">Tarjeta destino</label>
+                <label class="text-[11px] font-semibold text-gray-500 block mb-1">Tarjeta a pagar</label>
                 <select id="p-card" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-400"></select>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha del abono</label>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha de pago</label>
                     <input type="date" id="p-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-400 text-xs">
                 </div>
                 <div>
@@ -208,7 +204,7 @@
         </div>
     </div>
 
-    <!-- MODAL INGRESO (CREAR / EDITAR) -->
+    <!-- MODAL INGRESO -->
     <div id="modal-income" class="modal-bg">
         <div class="modal-content space-y-4">
             <h3 id="modal-income-title" class="font-bold text-lg text-slate-800">Registrar Ingreso</h3>
@@ -242,18 +238,26 @@
     </div>
 
     <script>
-        // --- CONFIG ---
         const CLIENT_ID = '764556873375-etu7k4dnc1o6uimg7kvai1m18v06s61i.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
 
         let state = { cards: [], expenses: [], payments: [], incomes: [] };
         let tokenClient;
 
-        // --- CORE ---
+        function getTodayString() { return new Date().toISOString().split('T')[0]; }
+
         function init() {
-            const data = localStorage.getItem('finanz_data_v5');
-            if(data) {
-                try { state = JSON.parse(data); } catch(e){}
+            const dataV5 = localStorage.getItem('finanz_data_v5');
+            const dataV4 = localStorage.getItem('finanz_data_v4');
+
+            if(dataV5) {
+                try { state = JSON.parse(dataV5); } catch(e){}
+            } else if (dataV4) {
+                // Migración automática de la versión anterior a esta para no perder tus datos
+                try { 
+                    state = JSON.parse(dataV4); 
+                    save(); // Guarda directamente en la v5
+                } catch(e){}
             }
             render();
         }
@@ -268,9 +272,8 @@
         }
 
         function render() {
-            // Totales de Ingresos y Abonos
-            const totalInc = state.incomes.reduce((a, b) => a + (parseFloat(b.amount) || 0), 0);
-            const totalPaid = state.payments.reduce((a, b) => a + (parseFloat(b.amount) || 0), 0);
+            const totalInc = state.incomes.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+            const totalPaid = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
             
             let totalExpensesOriginal = 0;
             let globalMonthReq = 0;
@@ -278,13 +281,12 @@
             state.cards.forEach(c => {
                 const exps = state.expenses.filter(e => e.cardId === c.id);
                 exps.forEach(e => {
-                    const total = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
+                    const total = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
                     totalExpensesOriginal += total;
                     globalMonthReq += (total / (parseInt(e.months) || 1));
                 });
             });
 
-            // Deuda total considerando los abonos ya efectuados
             const netDebt = Math.max(0, totalExpensesOriginal - totalPaid);
 
             document.getElementById('val-incomes').innerText = fmt(totalInc);
@@ -293,17 +295,16 @@
             document.getElementById('val-debt').innerText = fmt(netDebt);
             document.getElementById('val-month').innerText = fmt(globalMonthReq);
 
-            // Render Tarjetas
             const divCards = document.getElementById('list-cards');
             if (state.cards.length === 0) {
-                divCards.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-dashed">No tienes tarjetas registradas. Agrega una arriba.</div>`;
+                divCards.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-dashed text-sm">No tienes tarjetas registradas.</div>`;
             } else {
                 divCards.innerHTML = state.cards.map(c => {
                     const myExps = state.expenses.filter(e => e.cardId === c.id);
                     const myPays = state.payments.filter(p => p.cardId === c.id);
 
-                    const cardGrossDebt = myExps.reduce((acc, e) => acc + ((parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100))), 0);
-                    const cardPaid = myPays.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+                    const cardGrossDebt = myExps.reduce((acc, e) => acc + (parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100))), 0);
+                    const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
 
                     return `
@@ -316,7 +317,7 @@
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="editCard(${c.id})" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg text-slate-200 transition" title="Editar tarjeta">
-                                        <i class="fas fa-pen"></i>
+                                        <i class="fas fa-pen"></i> Editar
                                     </button>
                                     <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
                                         <i class="fas fa-plus"></i> Compra
@@ -324,7 +325,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Información de Fechas y Deuda Neta -->
                             <div class="mt-3 pt-3 border-t border-slate-700/80 flex justify-between items-center text-xs">
                                 <div class="flex gap-4">
                                     <span class="text-slate-300">Corte: <b class="text-white">Día ${c.cut || '--'}</b></span>
@@ -341,7 +341,6 @@
                             </div>
                         </div>
 
-                        <!-- Lista de compras de la tarjeta -->
                         <div class="p-4 space-y-2">
                             <p class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Compras registradas</p>
                             ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Sin compras registradas</p>' : ''}
@@ -350,13 +349,13 @@
                                     <div>
                                         <p class="font-semibold text-slate-700">${e.desc}</p>
                                         <span class="text-[10px] text-gray-400">
-                                            <i class="far fa-calendar-alt"></i> ${e.date || 'Sin fecha'} • ${e.type === 'msi' ? `${e.months} m (${e.interest}% int)` : 'Contado'}
+                                            <i class="far fa-calendar-alt"></i> ${e.date || 'Sin fecha'} • ${e.type === 'msi' ? `${e.months} meses` : 'Contado'}
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-3">
                                         <span class="font-bold text-slate-800">${fmt(e.amount)}</span>
-                                        <button onclick="editExp(${e.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                        <button onclick="del('expenses', ${e.id})" class="text-rose-400 hover:text-rose-600"><i class="fas fa-trash"></i></button>
+                                        <button onclick="editExp(${e.id})" class="text-blue-500 hover:text-blue-700 p-1"><i class="fas fa-edit"></i></button>
+                                        <button onclick="del('expenses', ${e.id})" class="text-rose-400 hover:text-rose-600 p-1"><i class="fas fa-trash"></i></button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -369,7 +368,6 @@
                 }).join('');
             }
 
-            // Render Ingresos
             const divIncomes = document.getElementById('list-incomes');
             if(state.incomes.length === 0) {
                 divIncomes.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>`;
@@ -394,7 +392,6 @@
                 `).join('');
             }
 
-            // Render Abonos
             const divPayments = document.getElementById('list-payments');
             if(state.payments.length === 0) {
                 divPayments.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs italic">No hay abonos registrados.</div>`;
@@ -417,7 +414,6 @@
             }
         }
 
-        // --- NAVEGACIÓN Y MODALES ---
         function showSec(id) {
             ['dashboard', 'cards', 'payments', 'incomes'].forEach(s => {
                 document.getElementById('sec-'+s).classList.toggle('hidden', s !== id);
@@ -439,7 +435,7 @@
         }
 
         function editCard(id) {
-            const c = state.cards.find(x => x.id === id);
+            const c = state.cards.find(x => x.id === Number(id));
             if(!c) return;
             document.getElementById('modal-card-title').innerText = "Editar Tarjeta";
             document.getElementById('c-id').value = c.id;
@@ -460,7 +456,7 @@
             if(!name) return alert('Ingresa un nombre para la tarjeta');
 
             if(id) {
-                const c = state.cards.find(x => x.id == id);
+                const c = state.cards.find(x => x.id === Number(id));
                 if(c) { c.name = name; c.bank = bank; c.cut = cut; c.pay = pay; }
             } else {
                 state.cards.push({ id: Date.now(), name, bank, cut, pay });
@@ -476,7 +472,7 @@
             document.getElementById('exp-card-id').value = cardId;
             document.getElementById('e-desc').value = '';
             document.getElementById('e-amount').value = '';
-            document.getElementById('e-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('e-date').value = getTodayString();
             document.getElementById('e-type').value = 'contado';
             document.getElementById('e-months').value = '1';
             document.getElementById('e-int').value = '0';
@@ -485,14 +481,14 @@
         }
 
         function editExp(id) {
-            const e = state.expenses.find(x => x.id === id);
+            const e = state.expenses.find(x => x.id === Number(id));
             if(!e) return;
             document.getElementById('modal-exp-title').innerText = "Editar Compra";
             document.getElementById('e-id').value = e.id;
             document.getElementById('exp-card-id').value = e.cardId;
             document.getElementById('e-desc').value = e.desc;
             document.getElementById('e-amount').value = e.amount;
-            document.getElementById('e-date').value = e.date || new Date().toISOString().split('T')[0];
+            document.getElementById('e-date').value = e.date || getTodayString();
             document.getElementById('e-type').value = e.type || 'contado';
             document.getElementById('e-months').value = e.months || 1;
             document.getElementById('e-int').value = e.interest || 0;
@@ -505,7 +501,7 @@
             const cardId = parseInt(document.getElementById('exp-card-id').value);
             const desc = document.getElementById('e-desc').value.trim() || 'Compra';
             const amount = parseFloat(document.getElementById('e-amount').value) || 0;
-            const date = document.getElementById('e-date').value;
+            const date = document.getElementById('e-date').value || getTodayString();
             const type = document.getElementById('e-type').value;
             const months = parseInt(document.getElementById('e-months').value) || 1;
             const interest = parseFloat(document.getElementById('e-int').value) || 0;
@@ -513,7 +509,7 @@
             if(amount <= 0) return alert('Ingresa un monto válido');
 
             if(id) {
-                const exp = state.expenses.find(x => x.id == id);
+                const exp = state.expenses.find(x => x.id === Number(id));
                 if(exp) {
                     exp.desc = desc; exp.amount = amount; exp.date = date;
                     exp.type = type; exp.months = months; exp.interest = interest;
@@ -530,21 +526,19 @@
             if(state.cards.length === 0) return alert('Primero debes registrar una tarjeta');
             document.getElementById('modal-pay-title').innerText = "Registrar Abono";
             document.getElementById('p-id').value = '';
-            const s = document.getElementById('p-card');
-            s.innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            document.getElementById('p-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('p-date').value = getTodayString();
             document.getElementById('p-amount').value = '';
             document.getElementById('modal-pay').style.display = 'flex';
         }
 
         function editPay(id) {
-            const p = state.payments.find(x => x.id === id);
+            const p = state.payments.find(x => x.id === Number(id));
             if(!p) return;
             document.getElementById('modal-pay-title').innerText = "Editar Abono";
             document.getElementById('p-id').value = p.id;
-            const s = document.getElementById('p-card');
-            s.innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name}</option>`).join('');
-            document.getElementById('p-date').value = p.date || new Date().toISOString().split('T')[0];
+            document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name}</option>`).join('');
+            document.getElementById('p-date').value = p.date || getTodayString();
             document.getElementById('p-amount').value = p.amount;
             document.getElementById('modal-pay').style.display = 'flex';
         }
@@ -552,13 +546,13 @@
         function savePay() {
             const id = document.getElementById('p-id').value;
             const cardId = parseInt(document.getElementById('p-card').value);
-            const date = document.getElementById('p-date').value;
+            const date = document.getElementById('p-date').value || getTodayString();
             const amount = parseFloat(document.getElementById('p-amount').value) || 0;
 
             if(amount <= 0) return alert('Ingresa un monto de abono válido');
 
             if(id) {
-                const p = state.payments.find(x => x.id == id);
+                const p = state.payments.find(x => x.id === Number(id));
                 if(p) { p.cardId = cardId; p.date = date; p.amount = amount; }
             } else {
                 state.payments.push({ id: Date.now(), cardId, date, amount });
@@ -574,19 +568,19 @@
             document.getElementById('i-desc').value = '';
             document.getElementById('i-amount').value = '';
             document.getElementById('i-frequency').value = 'monthly';
-            document.getElementById('i-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('i-date').value = getTodayString();
             document.getElementById('modal-income').style.display = 'flex';
         }
 
         function editIncome(id) {
-            const i = state.incomes.find(x => x.id === id);
+            const i = state.incomes.find(x => x.id === Number(id));
             if(!i) return;
             document.getElementById('modal-income-title').innerText = "Editar Ingreso";
             document.getElementById('i-id').value = i.id;
             document.getElementById('i-desc').value = i.desc;
             document.getElementById('i-amount').value = i.amount;
             document.getElementById('i-frequency').value = i.frequency || 'monthly';
-            document.getElementById('i-date').value = i.date || new Date().toISOString().split('T')[0];
+            document.getElementById('i-date').value = i.date || getTodayString();
             document.getElementById('modal-income').style.display = 'flex';
         }
 
@@ -595,12 +589,12 @@
             const desc = document.getElementById('i-desc').value.trim() || 'Ingreso';
             const amount = parseFloat(document.getElementById('i-amount').value) || 0;
             const frequency = document.getElementById('i-frequency').value;
-            const date = document.getElementById('i-date').value;
+            const date = document.getElementById('i-date').value || getTodayString();
 
             if(amount <= 0) return alert('Ingresa un monto válido');
 
             if(id) {
-                const i = state.incomes.find(x => x.id == id);
+                const i = state.incomes.find(x => x.id === Number(id));
                 if(i) { i.desc = desc; i.amount = amount; i.frequency = frequency; i.date = date; }
             } else {
                 state.incomes.push({ id: Date.now(), desc, amount, frequency, date });
@@ -609,14 +603,12 @@
             closeModal('modal-income');
         }
 
-        // --- ELIMINAR REGISTROS ---
         function del(type, id) { 
             if(confirm('¿Seguro que deseas eliminar este elemento?')) { 
-                state[type] = state[type].filter(i => i.id !== id); 
-                // Si eliminamos una tarjeta, limpiamos sus gastos y abonos asociados
+                state[type] = state[type].filter(i => i.id !== Number(id)); 
                 if(type === 'cards') {
-                    state.expenses = state.expenses.filter(e => e.cardId !== id);
-                    state.payments = state.payments.filter(p => p.cardId !== id);
+                    state.expenses = state.expenses.filter(e => e.cardId !== Number(id));
+                    state.payments = state.payments.filter(p => p.cardId !== Number(id));
                 }
                 save(); 
             } 
@@ -624,17 +616,12 @@
 
         // --- DRIVE SYNC ---
         function gapiLoaded() { 
-            gapi.load('client', () => {
-                gapi.client.init({
-                    discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
-                });
-            }); 
+            gapi.load('client', () => { gapi.client.init({ discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"] }); }); 
         }
 
         function gisLoaded() { 
             tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID, 
-                scope: SCOPES, 
+                client_id: CLIENT_ID, scope: SCOPES, 
                 callback: (resp) => { 
                     if(resp.access_token) { 
                         document.getElementById('btn-login').classList.add('hidden'); 
@@ -646,21 +633,16 @@
             }); 
         }
 
-        function handleAuthClick() { 
-            tokenClient.requestAccessToken({prompt: ''}); 
-        }
+        function handleAuthClick() { tokenClient.requestAccessToken({prompt: ''}); }
 
         async function saveToDrive() {
             try {
-                const token = gapi.client.getToken() ? gapi.client.getToken().access_token : null;
+                const token = gapi.client.getToken()?.access_token;
                 if(!token) return alert('Conecta Google Drive primero.');
 
                 const fileName = "finanzapp_cloud.json";
-                const response = await gapi.client.drive.files.list({ 
-                    q: `name = '${fileName}' and trashed = false`,
-                    fields: 'files(id, name)'
-                });
-                const file = response.result.files && response.result.files.length > 0 ? response.result.files[0] : null;
+                const response = await gapi.client.drive.files.list({ q: `name = '${fileName}' and trashed = false`, fields: 'files(id, name)' });
+                const file = response.result.files?.[0];
                 
                 const metadata = { name: fileName, mimeType: 'application/json' };
                 const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
@@ -668,51 +650,33 @@
                 fd.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
                 fd.append('file', blob);
 
-                const url = file ? 
-                    `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart` : 
-                    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-
-                await fetch(url, {
+                await fetch(file ? `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: file ? 'PATCH' : 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: fd
                 });
-                alert("✓ Datos sincronizados con éxito en tu Drive");
-            } catch (err) {
-                console.error(err);
-                alert("Error al subir a Drive. Revisa la consola.");
-            }
+                alert("✓ Datos subidos con éxito");
+            } catch (err) { alert("Error al subir a Drive."); }
         }
 
         async function loadFromDrive(silent = false) {
             try {
-                const token = gapi.client.getToken() ? gapi.client.getToken().access_token : null;
+                const token = gapi.client.getToken()?.access_token;
                 if(!token) return;
 
-                const response = await gapi.client.drive.files.list({ 
-                    q: "name = 'finanzapp_cloud.json' and trashed = false",
-                    fields: 'files(id, name)'
-                });
-                const file = response.result.files && response.result.files.length > 0 ? response.result.files[0] : null;
+                const response = await gapi.client.drive.files.list({ q: "name = 'finanzapp_cloud.json' and trashed = false", fields: 'files(id, name)' });
+                const file = response.result.files?.[0];
 
                 if(file) {
-                    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, { 
-                        headers: { 'Authorization': `Bearer ${token}` } 
-                    });
+                    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } });
                     const cloudData = await res.json();
                     if(silent) {
-                        state = cloudData;
-                        save();
-                    } else if(confirm("Se encontraron datos en Google Drive. ¿Deseas cargarlos y sobreescribir los locales?")) { 
-                        state = cloudData; 
-                        save(); 
+                        state = cloudData; save();
+                    } else if(confirm("Se encontraron datos en la nube. ¿Sobreescribir los locales?")) { 
+                        state = cloudData; save(); 
                     }
-                } else if(!silent) {
-                    alert("No se encontró ningún archivo de respaldo en Drive.");
-                }
-            } catch(err) {
-                console.error(err);
-            }
+                } else if(!silent) { alert("No se encontró respaldo."); }
+            } catch(err) {}
         }
 
         window.onload = init;
