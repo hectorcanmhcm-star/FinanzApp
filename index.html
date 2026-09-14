@@ -52,11 +52,11 @@
                 <h2 id="val-available" class="text-3xl font-bold mt-1 text-white">$0.00</h2>
                 <div class="mt-4 pt-4 border-t border-slate-700/80 space-y-1">
                     <p class="text-xs text-slate-300 flex justify-between">
-                        <span>DEUDA TOTAL TARJETAS (Neta):</span>
+                        <span>DEUDA TOTAL TARJETAS (Calculada):</span>
                         <span id="val-debt" class="font-bold text-white"></span>
                     </p>
                     <p class="text-xs text-slate-300 flex justify-between">
-                        <span>REQUERIDO ESTE MES:</span>
+                        <span>REQUERIDO ESTE MES (Calculado):</span>
                         <span id="val-month" class="font-bold text-indigo-400"></span>
                     </p>
                 </div>
@@ -111,6 +111,7 @@
         <div class="modal-content space-y-4">
             <h3 id="modal-card-title" class="font-bold text-lg text-slate-800">Tarjeta</h3>
             <input type="hidden" id="c-id">
+            
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Nombre de la tarjeta</label>
                 <input type="text" id="c-name" placeholder="Ej. Banamex Naranja" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
@@ -125,6 +126,22 @@
                     <input type="text" id="c-num" placeholder="Ej. 1234" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>
+
+            <!-- NUEVO: DATOS BANCARIOS REALES PARA COMPARAR -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Datos según la App del Banco</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-semibold text-gray-500 block mb-1">Deuda Total ($)</label>
+                        <input type="number" step="0.01" id="c-real-debt" placeholder="0.00" class="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-semibold text-gray-500 block mb-1">Pago del Mes ($)</label>
+                        <input type="number" step="0.01" id="c-real-pay" placeholder="0.00" class="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Día de corte</label>
@@ -135,6 +152,7 @@
                     <input type="number" id="c-pay" min="1" max="31" placeholder="Ej. 5" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>
+            
             <div class="flex gap-2 pt-2">
                 <button onclick="saveCard()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl font-bold transition">Guardar</button>
                 <button onclick="closeModal('modal-card')" class="p-3 text-gray-400 hover:text-gray-600 font-medium">Cancelar</button>
@@ -148,10 +166,21 @@
             <h3 id="modal-exp-title" class="font-bold text-lg text-slate-800">Registrar Compra</h3>
             <input type="hidden" id="e-id">
             <input type="hidden" id="exp-card-id">
+            
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto / Compra</label>
                 <input type="text" id="e-desc" placeholder="Ej. Despensa, Tenis..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
+
+            <!-- NUEVO: ESTADO DE LA COMPRA -->
+            <div>
+                <label class="text-[11px] font-semibold text-gray-500 block mb-1">Estado en estado de cuenta</label>
+                <select id="e-status" class="w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="new">Nueva (Aún no refleja / No corta)</option>
+                    <option value="reflected">Ya realizada / Reflejada en la app</option>
+                </select>
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label>
@@ -162,6 +191,7 @@
                     <input type="date" id="e-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
                 </div>
             </div>
+            
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Modalidad de pago</label>
                 <select id="e-type" onchange="document.getElementById('msi-div').classList.toggle('hidden', this.value=='contado')" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
@@ -169,6 +199,7 @@
                     <option value="msi">Meses (MSI / Intereses)</option>
                 </select>
             </div>
+            
             <div id="msi-div" class="hidden grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Meses</label>
@@ -179,6 +210,7 @@
                     <input type="number" step="0.1" id="e-int" placeholder="0" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value="0">
                 </div>
             </div>
+            
             <div class="flex gap-2 pt-2">
                 <button onclick="saveExp()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl font-bold transition">Guardar</button>
                 <button onclick="closeModal('modal-exp')" class="p-3 text-gray-400 hover:text-gray-600 font-medium">Cancelar</button>
@@ -257,17 +289,13 @@
         function getTodayString() { return new Date().toISOString().split('T')[0]; }
         function getEmptyState() { return { cards: [], expenses: [], payments: [], incomes: [] }; }
 
-        function init() {
-            loadLocalProfile();
-        }
+        function init() { loadLocalProfile(); }
 
         function loadLocalProfile() {
             const data = localStorage.getItem('finanz_data_local_v6');
             if (data) {
                 try { state = JSON.parse(data); } catch(e) { state = getEmptyState(); }
-            } else {
-                state = getEmptyState();
-            }
+            } else { state = getEmptyState(); }
             render();
         }
 
@@ -312,11 +340,11 @@
                 divCards.innerHTML = state.cards.map(c => {
                     const myExps = state.expenses.filter(e => e.cardId === c.id);
                     const myPays = state.payments.filter(p => p.cardId === c.id);
+                    
                     const cardGrossDebt = myExps.reduce((acc, e) => acc + (parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100))), 0);
                     const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
 
-                    // Formato visual para el número de tarjeta (Identificador)
                     const numIdentifier = c.num ? `<span class="text-indigo-200 ml-1 font-mono text-[10px]">• ${c.num}</span>` : '';
 
                     return `
@@ -332,24 +360,51 @@
                                     <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition shadow flex items-center gap-1"><i class="fas fa-plus"></i> Compra</button>
                                 </div>
                             </div>
-                            <div class="mt-3 pt-3 border-t border-slate-700/80 flex justify-between items-center text-xs">
-                                <div class="flex gap-4">
+                            
+                            <!-- TABLA DE COMPARACIÓN: BANCO VS APP -->
+                            <div class="mt-4 pt-4 border-t border-slate-700/80 flex flex-col gap-3">
+                                <div class="flex justify-between text-xs">
                                     <span class="text-slate-300">Corte: <b class="text-white">Día ${c.cut || '--'}</b></span>
                                     <span class="text-slate-300">Pago: <b class="text-indigo-300">Día ${c.pay || '--'}</b></span>
                                 </div>
-                                <div><span class="text-slate-400 text-[10px] block text-right">DEUDA ACTUAL</span><b class="text-sm text-emerald-400 font-bold">${fmt(cardCurrentDebt)}</b></div>
-                            </div>
-                            <div class="text-[10px] text-slate-400 mt-1 flex justify-between"><span>Total compras: ${fmt(cardGrossDebt)}</span><span>Abonado: ${fmt(cardPaid)}</span></div>
-                        </div>
-                        <div class="p-4 space-y-2">
-                            <p class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Compras registradas</p>
-                            ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Sin compras</p>' : ''}
-                            ${myExps.map(e => `
-                                <div class="flex justify-between items-center text-xs py-2 border-b border-gray-50 last:border-none">
-                                    <div><p class="font-semibold text-slate-700">${e.desc}</p><span class="text-[10px] text-gray-400"><i class="far fa-calendar-alt"></i> ${e.date || 'Sin fecha'} • ${e.type === 'msi' ? `${e.months} m` : 'Contado'}</span></div>
-                                    <div class="flex items-center gap-3"><span class="font-bold text-slate-800">${fmt(e.amount)}</span><button onclick="editExp(${e.id})" class="text-blue-500 p-1"><i class="fas fa-edit"></i></button><button onclick="del('expenses', ${e.id})" class="text-rose-400 p-1"><i class="fas fa-trash"></i></button></div>
+                                
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-700">
+                                        <span class="text-slate-400 text-[9px] block mb-1 uppercase tracking-wider">Según App Banco</span>
+                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Deuda:</span> <b class="text-white">${fmt(c.realDebt)}</b></div>
+                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Pago Mes:</span> <b class="text-rose-400">${fmt(c.realPay)}</b></div>
+                                    </div>
+                                    <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-700">
+                                        <span class="text-slate-400 text-[9px] block mb-1 uppercase tracking-wider">Calculado App</span>
+                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Deuda:</span> <b class="text-emerald-400">${fmt(cardCurrentDebt)}</b></div>
+                                        <div class="flex justify-between"><span class="text-slate-300 text-[10px]">Compras:</span> <b class="text-white">${fmt(cardGrossDebt)}</b></div>
+                                    </div>
                                 </div>
-                            `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 space-y-2">
+                            <p class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Desglose de compras</p>
+                            ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Sin compras</p>' : ''}
+                            ${myExps.map(e => {
+                                const statusBadge = e.status === 'reflected' 
+                                    ? `<span class="text-[8px] px-1.5 py-0.5 rounded-sm uppercase tracking-wide bg-emerald-100 text-emerald-700 border border-emerald-200">Reflejada</span>` 
+                                    : `<span class="text-[8px] px-1.5 py-0.5 rounded-sm uppercase tracking-wide bg-amber-100 text-amber-700 border border-amber-200">Nueva</span>`;
+                                
+                                return `
+                                <div class="flex justify-between items-center text-xs py-2 border-b border-gray-50 last:border-none">
+                                    <div>
+                                        <p class="font-semibold text-slate-700 flex items-center gap-2">${e.desc} ${statusBadge}</p>
+                                        <span class="text-[10px] text-gray-400"><i class="far fa-calendar-alt"></i> ${e.date || 'Sin fecha'} • ${e.type === 'msi' ? `${e.months} m` : 'Contado'}</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-bold text-slate-800">${fmt(e.amount)}</span>
+                                        <button onclick="editExp(${e.id})" class="text-blue-500 p-1"><i class="fas fa-edit"></i></button>
+                                        <button onclick="del('expenses', ${e.id})" class="text-rose-400 p-1"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
                             <div class="pt-3 border-t border-gray-100 flex justify-end"><button onclick="del('cards', ${c.id})" class="text-xs text-rose-500 hover:underline">Eliminar tarjeta</button></div>
                         </div>
                     </div>`;
@@ -382,13 +437,15 @@
         function showSec(id) { ['dashboard', 'cards', 'payments', 'incomes'].forEach(s => { document.getElementById('sec-'+s).classList.toggle('hidden', s !== id); document.getElementById('nav-'+s).classList.toggle('active-tab', s === id); }); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- FUNCIONES CRUD TARJETAS CON NUEVO CAMPO 'NUM' ---
+        // --- FUNCIONES CRUD TARJETAS ---
         function openCardModal() { 
             document.getElementById('modal-card-title').innerText = "Nueva Tarjeta"; 
             document.getElementById('c-id').value = ''; 
             document.getElementById('c-name').value = ''; 
             document.getElementById('c-bank').value = ''; 
             document.getElementById('c-num').value = ''; 
+            document.getElementById('c-real-debt').value = ''; 
+            document.getElementById('c-real-pay').value = ''; 
             document.getElementById('c-cut').value = ''; 
             document.getElementById('c-pay').value = ''; 
             document.getElementById('modal-card').style.display = 'flex'; 
@@ -402,6 +459,8 @@
             document.getElementById('c-name').value = c.name; 
             document.getElementById('c-bank').value = c.bank || ''; 
             document.getElementById('c-num').value = c.num || ''; 
+            document.getElementById('c-real-debt').value = c.realDebt || ''; 
+            document.getElementById('c-real-pay').value = c.realPay || ''; 
             document.getElementById('c-cut').value = c.cut || ''; 
             document.getElementById('c-pay').value = c.pay || ''; 
             document.getElementById('modal-card').style.display = 'flex'; 
@@ -412,6 +471,8 @@
             const name = document.getElementById('c-name').value.trim(); 
             const bank = document.getElementById('c-bank').value.trim(); 
             const num = document.getElementById('c-num').value.trim(); 
+            const realDebt = parseFloat(document.getElementById('c-real-debt').value) || 0;
+            const realPay = parseFloat(document.getElementById('c-real-pay').value) || 0;
             const cut = parseInt(document.getElementById('c-cut').value) || ''; 
             const pay = parseInt(document.getElementById('c-pay').value) || ''; 
             
@@ -419,17 +480,88 @@
             
             if(id) { 
                 const c = state.cards.find(x => x.id === Number(id)); 
-                if(c) { c.name = name; c.bank = bank; c.num = num; c.cut = cut; c.pay = pay; } 
+                if(c) { c.name = name; c.bank = bank; c.num = num; c.realDebt = realDebt; c.realPay = realPay; c.cut = cut; c.pay = pay; } 
             } else { 
-                state.cards.push({ id: Date.now(), name, bank, num, cut, pay }); 
+                state.cards.push({ id: Date.now(), name, bank, num, realDebt, realPay, cut, pay }); 
             } 
             save(); closeModal('modal-card'); 
         }
 
-        // Otras Funciones CRUD
-        function openExpModal(cardId) { document.getElementById('modal-exp-title').innerText = "Registrar Compra"; document.getElementById('e-id').value = ''; document.getElementById('exp-card-id').value = cardId; document.getElementById('e-desc').value = ''; document.getElementById('e-amount').value = ''; document.getElementById('e-date').value = getTodayString(); document.getElementById('e-type').value = 'contado'; document.getElementById('e-months').value = '1'; document.getElementById('e-int').value = '0'; document.getElementById('msi-div').classList.add('hidden'); document.getElementById('modal-exp').style.display = 'flex'; }
-        function editExp(id) { const e = state.expenses.find(x => x.id === Number(id)); if(!e) return; document.getElementById('modal-exp-title').innerText = "Editar Compra"; document.getElementById('e-id').value = e.id; document.getElementById('exp-card-id').value = e.cardId; document.getElementById('e-desc').value = e.desc; document.getElementById('e-amount').value = e.amount; document.getElementById('e-date').value = e.date || getTodayString(); document.getElementById('e-type').value = e.type || 'contado'; document.getElementById('e-months').value = e.months || 1; document.getElementById('e-int').value = e.interest || 0; document.getElementById('msi-div').classList.toggle('hidden', e.type !== 'msi'); document.getElementById('modal-exp').style.display = 'flex'; }
-        function saveExp() { const id = document.getElementById('e-id').value; const cardId = parseInt(document.getElementById('exp-card-id').value); const desc = document.getElementById('e-desc').value.trim() || 'Compra'; const amount = parseFloat(document.getElementById('e-amount').value) || 0; const date = document.getElementById('e-date').value || getTodayString(); const type = document.getElementById('e-type').value; const months = parseInt(document.getElementById('e-months').value) || 1; const interest = parseFloat(document.getElementById('e-int').value) || 0; if(amount <= 0) return alert('Ingresa monto válido'); if(id) { const exp = state.expenses.find(x => x.id === Number(id)); if(exp) { exp.desc = desc; exp.amount = amount; exp.date = date; exp.type = type; exp.months = months; exp.interest = interest; } } else { state.expenses.push({ id: Date.now(), cardId, desc, amount, date, type, months, interest }); } save(); closeModal('modal-exp'); }
+        // --- FUNCIONES CRUD COMPRAS ---
+        function openExpModal(cardId) { 
+            document.getElementById('modal-exp-title').innerText = "Registrar Compra"; 
+            document.getElementById('e-id').value = ''; 
+            document.getElementById('exp-card-id').value = cardId; 
+            document.getElementById('e-desc').value = ''; 
+            document.getElementById('e-status').value = 'new';
+            document.getElementById('e-status').className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+            document.getElementById('e-amount').value = ''; 
+            document.getElementById('e-date').value = getTodayString(); 
+            document.getElementById('e-type').value = 'contado'; 
+            document.getElementById('e-months').value = '1'; 
+            document.getElementById('e-int').value = '0'; 
+            document.getElementById('msi-div').classList.add('hidden'); 
+            document.getElementById('modal-exp').style.display = 'flex'; 
+        }
+
+        function editExp(id) { 
+            const e = state.expenses.find(x => x.id === Number(id)); 
+            if(!e) return; 
+            document.getElementById('modal-exp-title').innerText = "Editar Compra"; 
+            document.getElementById('e-id').value = e.id; 
+            document.getElementById('exp-card-id').value = e.cardId; 
+            document.getElementById('e-desc').value = e.desc; 
+            document.getElementById('e-status').value = e.status || 'new';
+            
+            // Colores del selector según estado
+            const statusSelect = document.getElementById('e-status');
+            if(e.status === 'reflected') {
+                statusSelect.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+            } else {
+                statusSelect.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+            }
+
+            document.getElementById('e-amount').value = e.amount; 
+            document.getElementById('e-date').value = e.date || getTodayString(); 
+            document.getElementById('e-type').value = e.type || 'contado'; 
+            document.getElementById('e-months').value = e.months || 1; 
+            document.getElementById('e-int').value = e.interest || 0; 
+            document.getElementById('msi-div').classList.toggle('hidden', e.type !== 'msi'); 
+            document.getElementById('modal-exp').style.display = 'flex'; 
+        }
+
+        // Listener para cambiar el color del select en vivo
+        document.getElementById('e-status').addEventListener('change', function() {
+            if(this.value === 'reflected') {
+                this.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+            } else {
+                this.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500";
+            }
+        });
+
+        function saveExp() { 
+            const id = document.getElementById('e-id').value; 
+            const cardId = parseInt(document.getElementById('exp-card-id').value); 
+            const desc = document.getElementById('e-desc').value.trim() || 'Compra'; 
+            const status = document.getElementById('e-status').value;
+            const amount = parseFloat(document.getElementById('e-amount').value) || 0; 
+            const date = document.getElementById('e-date').value || getTodayString(); 
+            const type = document.getElementById('e-type').value; 
+            const months = parseInt(document.getElementById('e-months').value) || 1; 
+            const interest = parseFloat(document.getElementById('e-int').value) || 0; 
+            
+            if(amount <= 0) return alert('Ingresa monto válido'); 
+            
+            if(id) { 
+                const exp = state.expenses.find(x => x.id === Number(id)); 
+                if(exp) { exp.desc = desc; exp.status = status; exp.amount = amount; exp.date = date; exp.type = type; exp.months = months; exp.interest = interest; } 
+            } else { 
+                state.expenses.push({ id: Date.now(), cardId, desc, status, amount, date, type, months, interest }); 
+            } 
+            save(); closeModal('modal-exp'); 
+        }
+
+        // --- FUNCIONES PAGOS E INGRESOS ---
         function openPayModal() { if(state.cards.length === 0) return alert('Primero registra tarjeta'); document.getElementById('modal-pay-title').innerText = "Registrar Abono"; document.getElementById('p-id').value = ''; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name} ${c.num ? '('+c.num+')' : ''}</option>`).join(''); document.getElementById('p-date').value = getTodayString(); document.getElementById('p-amount').value = ''; document.getElementById('modal-pay').style.display = 'flex'; }
         function editPay(id) { const p = state.payments.find(x => x.id === Number(id)); if(!p) return; document.getElementById('modal-pay-title').innerText = "Editar Abono"; document.getElementById('p-id').value = p.id; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name} ${c.num ? '('+c.num+')' : ''}</option>`).join(''); document.getElementById('p-date').value = p.date || getTodayString(); document.getElementById('p-amount').value = p.amount; document.getElementById('modal-pay').style.display = 'flex'; }
         function savePay() { const id = document.getElementById('p-id').value; const cardId = parseInt(document.getElementById('p-card').value); const date = document.getElementById('p-date').value || getTodayString(); const amount = parseFloat(document.getElementById('p-amount').value) || 0; if(amount <= 0) return alert('Ingresa abono válido'); if(id) { const p = state.payments.find(x => x.id === Number(id)); if(p) { p.cardId = cardId; p.date = date; p.amount = amount; } } else { state.payments.push({ id: Date.now(), cardId, date, amount }); } save(); closeModal('modal-pay'); }
