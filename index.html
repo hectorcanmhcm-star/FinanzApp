@@ -24,7 +24,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 20</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 21</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -42,7 +42,7 @@
             
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Ingresos Totales</p>
+                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Ingresos Totales (Confirmados)</p>
                     <h2 id="val-incomes" class="text-xl font-bold text-emerald-600 mt-1">$0.00</h2>
                 </div>
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
@@ -232,7 +232,6 @@
                 </div>
             </div>
 
-            <!-- EXCLUSIVO TARJETA DE CRÉDITO EN EL ATAJO -->
             <div id="u-cc-fields" class="hidden space-y-4 border-t border-gray-200 pt-4 mt-2">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -501,7 +500,64 @@
     </div>
 
     <div id="modal-pay" class="modal-bg"><div class="modal-content space-y-4"><h3 id="modal-pay-title" class="font-bold text-lg text-slate-800">Abonar a Tarjeta de Crédito</h3><input type="hidden" id="p-id"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Pagar a la Tarjeta:</label><select id="p-card" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Desde (Débito):</label><select id="p-source" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label><input type="date" id="p-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-xs"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label><input type="number" step="0.01" id="p-amount" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div></div><div class="flex gap-2 pt-2"><button onclick="savePay()" class="flex-1 bg-emerald-500 text-white p-3 rounded-xl font-bold">Guardar Abono</button><button onclick="closeModal('modal-pay')" class="p-3 text-gray-400">Cancelar</button></div></div></div>
-    <div id="modal-income" class="modal-bg"><div class="modal-content space-y-4"><h3 id="modal-income-title" class="font-bold text-lg text-slate-800">Registrar Ingreso</h3><input type="hidden" id="i-id"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto</label><input type="text" id="i-desc" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Destino (Cuenta Débito)</label><select id="i-target" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Frecuencia</label><select id="i-frequency" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"><option value="monthly">Mensual recurrente (Plantilla)</option><option value="unique">Ingreso único</option></select></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label><input type="number" step="0.01" id="i-amount" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label><input type="date" id="i-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-xs focus:ring-2 focus:ring-emerald-500"></div></div><div class="flex gap-2 pt-2"><button onclick="saveIncome()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition">Guardar Ingreso</button><button onclick="closeModal('modal-income')" class="p-3 text-gray-400">Cancelar</button></div></div></div>
+    
+    <!-- MODAL INGRESO NUEVO -->
+    <div id="modal-income" class="modal-bg">
+        <div class="modal-content space-y-4">
+            <h3 id="modal-income-title" class="font-bold text-lg text-slate-800">Registrar Ingreso</h3>
+            <input type="hidden" id="i-id">
+            
+            <div>
+                <label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto o Fuente</label>
+                <input type="text" id="i-desc" placeholder="Ej. Nómina, Venta..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            
+            <div>
+                <label class="text-[11px] font-semibold text-gray-500 block mb-1">Destino (Cuenta Débito)</label>
+                <select id="i-target" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select>
+            </div>
+            
+            <div>
+                <label class="text-[11px] font-semibold text-gray-500 block mb-1">Frecuencia</label>
+                <select id="i-frequency" onchange="toggleIncomeFreq(this.value)" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
+                    <option value="unique">Ingreso único</option>
+                    <option value="monthly">Mensual (Plantilla)</option>
+                    <option value="biweekly">Quincenal (Plantilla)</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label>
+                    <input type="number" step="0.01" id="i-amount" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-bold">
+                </div>
+                <div id="i-date-wrapper">
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label>
+                    <input type="date" id="i-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-xs focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+
+            <!-- CAMPOS PARA PLANTILLAS (Días exactos) -->
+            <div id="i-days-wrapper" class="hidden grid-cols-2 gap-3 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                <div class="col-span-2">
+                    <p class="text-[10px] text-emerald-800 font-semibold mb-2"><i class="fas fa-magic"></i> La app generará automáticamente tu ingreso estos días:</p>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-emerald-700 block mb-1">Día de pago 1</label>
+                    <input type="number" min="1" max="31" id="i-day1" placeholder="Ej. 15" class="w-full p-2 bg-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 text-xs">
+                </div>
+                <div id="i-day2-wrapper" class="hidden">
+                    <label class="text-[11px] font-semibold text-emerald-700 block mb-1">Día de pago 2</label>
+                    <input type="number" min="1" max="31" id="i-day2" placeholder="Ej. 30" class="w-full p-2 bg-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 text-xs">
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="saveIncome()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition">Guardar Ingreso</button>
+                <button onclick="closeModal('modal-income')" class="p-3 text-gray-400">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const CLIENT_ID = '764556873375-etu7k4dnc1o6uimg7kvai1m18v06s61i.apps.googleusercontent.com';
@@ -521,22 +577,56 @@
             if(!d.incomes) d.incomes = []; if(!d.debitAccounts) d.debitAccounts = []; if(!d.cashExpenses) d.cashExpenses = [];
             if(!d.services) d.services = []; if(!d.domiciled) d.domiciled = [];
             if(d.debitAccounts.length === 0) d.debitAccounts.push({id: 'general', name: 'Efectivo / Cuenta General'});
+            
+            // Migrar incomes antiguos
+            d.incomes.forEach(i => { if(i.isConfirmed === undefined && i.frequency === 'unique') i.isConfirmed = true; });
+
             return d;
         }
 
         function checkAndGenerateIncomes() {
-            let changed = false; const todayStr = getTodayString();
-            state.incomes.forEach(i => {
-                if(i.frequency === 'monthly') {
-                    if(!i.nextDate) {
-                        let d = new Date(i.date + 'T12:00:00'); d.setMonth(d.getMonth() + 1); i.nextDate = d.toISOString().split('T')[0]; changed = true;
-                    }
-                    while(i.nextDate <= todayStr) {
-                        state.incomes.push({ id: Date.now() + Math.floor(Math.random()*10000), desc: i.desc, amount: i.amount, targetId: i.targetId || 'general', frequency: 'unique', date: i.nextDate });
-                        let d = new Date(i.nextDate + 'T12:00:00'); d.setMonth(d.getMonth() + 1); i.nextDate = d.toISOString().split('T')[0]; changed = true;
-                    }
+            let changed = false;
+            const now = new Date();
+            const todayStr = getTodayString(); 
+
+            // Revisar mes actual y anterior por seguridad
+            const monthsToCheck = [ new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 1) ];
+
+            state.incomes.forEach(tpl => {
+                if (tpl.frequency === 'monthly' || tpl.frequency === 'biweekly') {
+                    if (!tpl.generatedDates) tpl.generatedDates = [];
+                    if (!tpl.createdAt) tpl.createdAt = todayStr;
+
+                    monthsToCheck.forEach(d => {
+                        const yyyy = d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const days = [];
+                        if (tpl.day1) days.push(parseInt(tpl.day1));
+                        if (tpl.frequency === 'biweekly' && tpl.day2) days.push(parseInt(tpl.day2));
+
+                        days.forEach(day => {
+                            const dd = String(day).padStart(2, '0');
+                            const targetDate = `${yyyy}-${mm}-${dd}`;
+                            const startLimit = tpl.createdAt.substring(0, 7) + '-01'; 
+
+                            if (targetDate >= startLimit && targetDate <= todayStr && !tpl.generatedDates.includes(targetDate)) {
+                                state.incomes.push({
+                                    id: Date.now() + Math.floor(Math.random() * 10000),
+                                    desc: tpl.desc, amount: tpl.amount, targetId: tpl.targetId || 'general',
+                                    frequency: 'unique', date: targetDate, isConfirmed: false // PENDIENTE DE CONFIRMAR
+                                });
+                                tpl.generatedDates.push(targetDate);
+                                changed = true;
+                            }
+                        });
+                    });
                 }
-            }); return changed;
+            });
+            return changed;
+        }
+
+        function confirmIncome(id) {
+            const i = state.incomes.find(x => x.id === Number(id));
+            if(i) { i.isConfirmed = true; save(); }
         }
 
         function loadLocalProfile() {
@@ -606,13 +696,26 @@
 
                 let totalCashAvailable = 0; const debitBalances = {};
                 state.debitAccounts.forEach(d => debitBalances[d.id] = 0);
-                state.incomes.forEach(i => { const t = i.targetId || 'general'; if(debitBalances[t] !== undefined) debitBalances[t] += parseFloat(i.amount||0); });
+                
+                // Sumar solo ingresos CONFIRMADOS
+                state.incomes.forEach(i => { 
+                    if (i.frequency === 'unique' && i.isConfirmed !== false) {
+                        const t = i.targetId || 'general'; if(debitBalances[t] !== undefined) debitBalances[t] += parseFloat(i.amount||0); 
+                    }
+                });
+                
                 state.cashExpenses.forEach(e => { const t = e.accountId || 'general'; if(debitBalances[t] !== undefined) debitBalances[t] -= parseFloat(e.amount||0); });
                 const totalPaidToCC = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
                 state.payments.forEach(p => { const t = p.sourceId || 'general'; if(debitBalances[t] !== undefined) debitBalances[t] -= parseFloat(p.amount||0); });
 
                 for(let key in debitBalances) { totalCashAvailable += debitBalances[key]; }
-                const totalIncomesSum = state.incomes.reduce((a,b) => a+parseFloat(b.amount||0), 0);
+                
+                // Total Incomes Sum (solo confirmados únicos)
+                const totalIncomesSum = state.incomes.reduce((a,b) => {
+                    if (b.frequency === 'unique' && b.isConfirmed !== false) return a + parseFloat(b.amount||0);
+                    return a;
+                }, 0);
+
                 let srvTotal = state.services.reduce((a,b) => a + parseFloat(b.amount||0), 0);
                 
                 let totalDomDebit = 0;
@@ -656,7 +759,7 @@
                 if(divDebit) {
                     divDebit.innerHTML = state.debitAccounts.map(d => `
                         <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex flex-col justify-between">
-                            <div class="flex justify-between items-start mb-2"><span class="font-bold text-indigo-900 text-xs">${d.name}</span>${d.id !== 'general' ? `<button onclick="del('debitAccounts', ${d.id})" class="text-indigo-300 hover:text-rose-400"><i class="fas fa-times"></i></button>` : ''}</div>
+                            <div class="flex justify-between items-start mb-2"><span class="font-bold text-indigo-900 text-xs">${d.name}</span>${d.id !== 'general' ? `<button onclick="del('debitAccounts', '${d.id}')" class="text-indigo-300 hover:text-rose-400"><i class="fas fa-times"></i></button>` : ''}</div>
                             <span class="text-lg font-bold text-indigo-700">${fmt(debitBalances[d.id])}</span>
                         </div>
                     `).join('');
@@ -667,7 +770,7 @@
                 if(divCash) {
                     let allCashFlow = [];
                     state.cashExpenses.forEach(e => allCashFlow.push({ ...e, isGasto: true }));
-                    state.incomes.forEach(i => allCashFlow.push({ ...i, isIngreso: true }));
+                    state.incomes.forEach(i => { if(i.frequency === 'unique') allCashFlow.push({ ...i, isIngreso: true }) });
                     state.payments.forEach(p => allCashFlow.push({ ...p, isAbono: true }));
 
                     allCashFlow.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -678,7 +781,10 @@
                             return `<div class="py-3 flex justify-between items-center text-xs border-b border-gray-50 last:border-none px-4"><div><p class="font-bold text-slate-700"><i class="fas fa-shopping-cart text-rose-400 w-4"></i> ${m.desc}</p><p class="text-[9px] text-gray-400 mt-0.5 ml-5">De: ${acc.name} • ${m.date}</p></div><div class="flex items-center gap-3"><span class="font-bold text-rose-500">-${fmt(m.amount)}</span><button onclick="editCashExp(${m.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button><button onclick="del('cashExpenses', ${m.id})" class="text-rose-300 hover:text-rose-500"><i class="fas fa-trash"></i></button></div></div>`;
                         } else if(m.isIngreso) {
                             const acc = state.debitAccounts.find(a => a.id == m.targetId) || {name:'General'};
-                            return `<div class="py-3 flex justify-between items-center text-xs border-b border-gray-50 last:border-none px-4"><div><p class="font-bold text-slate-700"><i class="fas fa-arrow-down text-emerald-400 w-4"></i> ${m.desc}</p><p class="text-[9px] text-gray-400 mt-0.5 ml-5">Hacia: ${acc.name} • ${m.date}</p></div><div class="flex items-center gap-3"><span class="font-bold text-emerald-600">+${fmt(m.amount)}</span><button onclick="editIncome(${m.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${m.id})" class="text-rose-300 hover:text-rose-500"><i class="fas fa-trash"></i></button></div></div>`;
+                            const confirmBtn = m.isConfirmed === false ? `<button onclick="confirmIncome(${m.id})" class="text-emerald-600 bg-emerald-100 p-1.5 rounded hover:bg-emerald-200" title="Confirmar Pago"><i class="fas fa-check"></i></button>` : '';
+                            const statusBadge = m.isConfirmed === false ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 ml-1">⏳ Pendiente</span>` : '';
+                            
+                            return `<div class="py-3 flex justify-between items-center text-xs border-b border-gray-50 last:border-none px-4"><div><p class="font-bold text-slate-700 flex items-center"><i class="fas fa-arrow-down text-emerald-400 w-4"></i> ${m.desc} ${statusBadge}</p><p class="text-[9px] text-gray-400 mt-0.5 ml-5">Hacia: ${acc.name} • ${m.date}</p></div><div class="flex items-center gap-3"><span class="font-bold ${m.isConfirmed === false ? 'text-gray-400' : 'text-emerald-600'}">+${fmt(m.amount)}</span>${confirmBtn}<button onclick="editIncome(${m.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${m.id})" class="text-rose-300 hover:text-rose-500"><i class="fas fa-trash"></i></button></div></div>`;
                         } else if(m.isAbono) {
                             const acc = state.debitAccounts.find(a => a.id == m.sourceId) || {name:'General'};
                             const c = state.cards.find(x => x.id == m.cardId);
@@ -710,12 +816,9 @@
                                 }
                                 if (e.type === 'msi') {
                                     const m = parseInt(e.months) || 1; let curr = parseInt(e.currentMonth) || 1; if(curr > m) curr = m;
-                                    let mReq = totalConInt / m;
-                                    if (!isNextCycle) cardMonthReq += mReq;
-                                    cardGrossDebt += mReq * (m - curr + 1);
+                                    let mReq = totalConInt / m; if (!isNextCycle) cardMonthReq += mReq; cardGrossDebt += mReq * (m - curr + 1);
                                 } else {
-                                    if (!isNextCycle) cardMonthReq += totalConInt;
-                                    cardGrossDebt += totalConInt;
+                                    if (!isNextCycle) cardMonthReq += totalConInt; cardGrossDebt += totalConInt;
                                 }
                             });
 
@@ -831,7 +934,40 @@
                         </div>`;
                     }).join('');
                 }
-                
+
+                // Incomes en su pestaña (Historial + Plantillas)
+                const divIncomes = document.getElementById('list-incomes');
+                if(divIncomes) {
+                    const sortedIncomes = [...state.incomes].sort((a,b) => {
+                        if (a.frequency !== 'unique' && b.frequency === 'unique') return -1;
+                        if (a.frequency === 'unique' && b.frequency !== 'unique') return 1;
+                        return new Date(b.date || a.createdAt) - new Date(a.date || b.createdAt);
+                    });
+                    
+                    divIncomes.innerHTML = sortedIncomes.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>` : sortedIncomes.map(i => {
+                        const acc = state.debitAccounts.find(a => a.id == i.targetId) || {name: 'General'};
+                        
+                        if (i.frequency === 'unique') {
+                            const confirmBtn = i.isConfirmed === false ? `<button onclick="confirmIncome(${i.id})" class="text-emerald-600 bg-emerald-100 p-1.5 rounded hover:bg-emerald-200" title="Confirmar Pago"><i class="fas fa-check"></i></button>` : '';
+                            const statusBadge = i.isConfirmed === false ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 ml-1">⏳ Pendiente</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 ml-1">✓ Pagado</span>`;
+                            
+                            return `
+                            <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none ${i.isConfirmed === false ? 'bg-amber-50/30' : ''}">
+                                <div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-slate-700">${i.desc}</span>${statusBadge}</div><p class="text-[9px] text-gray-400"><i class="fas fa-wallet"></i> ${acc.name} • <i class="far fa-calendar-alt"></i> ${i.date}</p></div>
+                                <div class="flex items-center gap-2"><span class="font-bold ${i.isConfirmed===false ? 'text-gray-400' : 'text-emerald-600'} mr-2">+${fmt(i.amount)}</span>${confirmBtn}<button onclick="editIncome(${i.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
+                            </div>`
+                        } else {
+                            const freqTag = i.frequency === 'monthly' ? 'Mensual' : 'Quincenal';
+                            const daysTag = i.frequency === 'monthly' ? `Día ${i.day1}` : `Días ${i.day1} y ${i.day2}`;
+                            return `
+                            <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none bg-indigo-50/30">
+                                <div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-indigo-900">${i.desc}</span><span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-indigo-100 text-indigo-700"><i class="fas fa-sync-alt"></i> Plantilla ${freqTag}</span></div><p class="text-[9px] text-indigo-400"><i class="fas fa-wallet"></i> ${acc.name} • Se paga: ${daysTag}</p></div>
+                                <div class="flex items-center gap-2"><span class="font-bold text-indigo-600 mr-2">+${fmt(i.amount)}</span><button onclick="editIncome(${i.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
+                            </div>`
+                        }
+                    }).join('');
+                }
+
             } catch (err) { console.error("Error durante render:", err); }
         }
 
@@ -955,22 +1091,64 @@
         function openPayModal() { if(state.cards.length === 0) return alert('Primero registra tarjeta'); document.getElementById('modal-pay-title').innerText = "Registrar Abono a TC"; document.getElementById('p-id').value = ''; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); document.getElementById('p-source').innerHTML = state.debitAccounts.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); document.getElementById('p-date').value = getTodayString(); document.getElementById('p-amount').value = ''; document.getElementById('modal-pay').style.display = 'flex'; }
         function editPay(id) { const p = state.payments.find(x => x.id === Number(id)); if(!p) return; document.getElementById('modal-pay-title').innerText = "Editar Abono"; document.getElementById('p-id').value = p.id; document.getElementById('p-card').innerHTML = state.cards.map(c => `<option value="${c.id}" ${c.id === p.cardId ? 'selected': ''}>${c.name}</option>`).join(''); document.getElementById('p-date').value = p.date || getTodayString(); document.getElementById('p-amount').value = p.amount; document.getElementById('modal-pay').style.display = 'flex'; }
         function savePay() { const cardId = parseInt(document.getElementById('p-card').value); const sourceId = document.getElementById('p-source').value; const date = document.getElementById('p-date').value || getTodayString(); const amount = parseFloat(document.getElementById('p-amount').value) || 0; if(amount <= 0) return; state.payments.push({ id: Date.now(), cardId, sourceId, date, amount }); save(); closeModal('modal-pay'); }
-        function openIncomeModal() { document.getElementById('modal-income-title').innerText = "Nuevo Ingreso"; document.getElementById('i-id').value = ''; document.getElementById('i-desc').value = ''; document.getElementById('i-amount').value = ''; document.getElementById('i-target').innerHTML = state.debitAccounts.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); document.getElementById('i-frequency').value = 'monthly'; document.getElementById('i-date').value = getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
-        function editIncome(id) { const i = state.incomes.find(x => x.id === Number(id)); if(!i) return; document.getElementById('modal-income-title').innerText = "Editar Ingreso"; document.getElementById('i-id').value = i.id; document.getElementById('i-desc').value = i.desc; document.getElementById('i-amount').value = i.amount; document.getElementById('i-frequency').value = i.frequency || 'monthly'; document.getElementById('i-date').value = i.date || getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
-        function saveIncome() { const desc = document.getElementById('i-desc').value.trim() || 'Ingreso'; const targetId = document.getElementById('i-target').value; const amount = parseFloat(document.getElementById('i-amount').value) || 0; const frequency = document.getElementById('i-frequency').value; const date = document.getElementById('i-date').value || getTodayString(); if(amount <= 0) return; state.incomes.push({ id: Date.now(), desc, targetId, amount, frequency, date }); save(); closeModal('modal-income'); }
         
-        // --- FUNCIÓN DE ELIMINADO UNIVERSAL CORREGIDA ---
-        function del(type, id) { 
-            if(confirm('¿Seguro que deseas eliminar?')) { 
-                state[type] = state[type].filter(i => String(i.id) !== String(id)); 
-                if(type === 'cards') { 
-                    state.expenses = state.expenses.filter(e => String(e.cardId) !== String(id)); 
-                    state.payments = state.payments.filter(p => String(p.cardId) !== String(id)); 
-                    state.domiciled = state.domiciled.filter(d => String(d.cardId) !== String(id) && d.sourceId !== 'credit_'+id); 
-                } 
-                save(); 
-            } 
+        function toggleIncomeFreq(freq) {
+            document.getElementById('i-date-wrapper').classList.toggle('hidden', freq !== 'unique');
+            document.getElementById('i-days-wrapper').classList.toggle('hidden', freq === 'unique');
+            document.getElementById('i-day2-wrapper').classList.toggle('hidden', freq !== 'biweekly');
         }
+
+        function openIncomeModal() { 
+            document.getElementById('modal-income-title').innerText = "Nuevo Ingreso"; 
+            document.getElementById('i-id').value = ''; document.getElementById('i-desc').value = ''; document.getElementById('i-amount').value = ''; 
+            document.getElementById('i-target').innerHTML = state.debitAccounts.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            document.getElementById('i-frequency').value = 'unique'; 
+            document.getElementById('i-date').value = getTodayString(); 
+            document.getElementById('i-day1').value = ''; document.getElementById('i-day2').value = '';
+            toggleIncomeFreq('unique');
+            document.getElementById('modal-income').style.display = 'flex'; 
+        }
+
+        function editIncome(id) { 
+            const i = state.incomes.find(x => x.id === Number(id)); if(!i) return; 
+            document.getElementById('modal-income-title').innerText = "Editar Ingreso"; 
+            document.getElementById('i-id').value = i.id; document.getElementById('i-desc').value = i.desc; document.getElementById('i-amount').value = i.amount; 
+            document.getElementById('i-target').innerHTML = state.debitAccounts.map(d => `<option value="${d.id}" ${d.id==i.targetId?'selected':''}>${d.name}</option>`).join('');
+            document.getElementById('i-frequency').value = i.frequency || 'unique'; 
+            document.getElementById('i-date').value = i.date || getTodayString(); 
+            document.getElementById('i-day1').value = i.day1 || ''; document.getElementById('i-day2').value = i.day2 || '';
+            toggleIncomeFreq(i.frequency || 'unique');
+            document.getElementById('modal-income').style.display = 'flex'; 
+        }
+
+        function saveIncome() { 
+            const id = document.getElementById('i-id').value;
+            const desc = document.getElementById('i-desc').value.trim() || 'Ingreso'; 
+            const targetId = document.getElementById('i-target').value;
+            const amount = parseFloat(document.getElementById('i-amount').value) || 0; 
+            const frequency = document.getElementById('i-frequency').value; 
+            if(amount <= 0) return alert('Monto inválido'); 
+
+            if(id) {
+                const i = state.incomes.find(x => x.id === Number(id)); 
+                if(i) {
+                    i.desc = desc; i.targetId = targetId; i.amount = amount; i.frequency = frequency;
+                    if(frequency === 'unique') { i.date = document.getElementById('i-date').value || getTodayString(); } 
+                    else { i.day1 = parseInt(document.getElementById('i-day1').value) || 1; if(frequency === 'biweekly') i.day2 = parseInt(document.getElementById('i-day2').value) || 15; }
+                }
+            } else {
+                if(frequency === 'unique') {
+                    state.incomes.push({ id: Date.now(), desc, targetId, amount, frequency, date: document.getElementById('i-date').value || getTodayString(), isConfirmed: true }); 
+                } else {
+                    const day1 = parseInt(document.getElementById('i-day1').value) || 1;
+                    const day2 = frequency === 'biweekly' ? (parseInt(document.getElementById('i-day2').value) || 15) : null;
+                    state.incomes.push({ id: Date.now(), desc, targetId, amount, frequency, day1, day2, generatedDates: [], createdAt: getTodayString() }); 
+                }
+            }
+            save(); closeModal('modal-income'); 
+        }
+
+        function del(type, id) { let keyId = type === 'debitAccounts' ? String(id) : Number(id); if(confirm('¿Seguro que deseas eliminar?')) { state[type] = state[type].filter(i => i.id !== keyId); if(type === 'cards') { state.expenses = state.expenses.filter(e => e.cardId !== keyId); state.payments = state.payments.filter(p => p.cardId !== keyId); state.domiciled = state.domiciled.filter(d=>d.sourceId === 'credit_'+keyId); } save(); } }
 
         // --- MANEJO DE DRIVE ---
         function updateAuthUI(isLoggedIn) { document.getElementById('btn-login').classList.toggle('hidden', isLoggedIn); document.getElementById('btn-sync').classList.toggle('hidden', !isLoggedIn); document.getElementById('btn-pull').classList.toggle('hidden', !isLoggedIn); document.getElementById('btn-logout').classList.toggle('hidden', !isLoggedIn); const badge = document.getElementById('mode-badge'); if(isLoggedIn) { badge.innerText = 'Drive Seguro'; badge.className = 'text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full shadow-sm font-bold'; } else { badge.innerText = 'Uso Local'; badge.className = 'text-[10px] bg-slate-500 px-2 py-0.5 rounded-full shadow-sm font-bold'; } }
