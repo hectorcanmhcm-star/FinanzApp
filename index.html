@@ -22,7 +22,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 10</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 12</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -150,7 +150,6 @@
                 </div>
             </div>
 
-            <!-- DATOS BANCO -->
             <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider"><i class="fas fa-university mr-1"></i> Datos App del Banco</p>
                 <div class="grid grid-cols-2 gap-3">
@@ -339,6 +338,9 @@
         let tokenClient;
         let isGapiReady = false;
         let isGisReady = false;
+        
+        // --- VARIABLE PARA EL AUTOGUARDADO ---
+        let autoSaveInterval = null;
 
         function getTodayString() { return new Date().toISOString().split('T')[0]; }
         function getEmptyState() { return { cards: [], expenses: [], payments: [], incomes: [] }; }
@@ -400,6 +402,35 @@
 
         function fmt(n) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0); }
 
+        function getCardDates(cutDayStr, payDayStr) {
+            const cutDay = parseInt(cutDayStr);
+            const payDay = parseInt(payDayStr);
+            if(!cutDay || !payDay) return { cutStr: 'Día ' + (cutDayStr||'--'), payStr: 'Día ' + (payDayStr||'--') };
+            
+            const now = new Date();
+            const currentDay = now.getDate();
+            let currentMonth = now.getMonth();
+            
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            
+            let lastCutMonth = currentMonth;
+            if (currentDay < cutDay) {
+                lastCutMonth--;
+                if (lastCutMonth < 0) lastCutMonth = 11;
+            }
+            
+            let nextPayMonth = currentMonth;
+            if (currentDay > payDay) {
+                nextPayMonth++;
+                if (nextPayMonth > 11) nextPayMonth = 0;
+            }
+            
+            return {
+                cutStr: `${cutDay} de ${months[lastCutMonth]}`,
+                payStr: `${payDay} de ${months[nextPayMonth]}`
+            };
+        }
+
         function render() {
             const totalInc = state.incomes.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
             const totalPaid = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
@@ -417,15 +448,12 @@
                 exps.forEach(e => {
                     const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
                     
-                    // EVALUACIÓN DE CORTE (REGLA DE SALTO DE MES)
                     let isNextCycle = false;
                     if (c.cut && e.date) {
                         const cutDay = parseInt(c.cut);
                         const expDate = new Date(e.date + 'T12:00:00');
                         const today = new Date();
                         const isSameMonthAndYear = (expDate.getMonth() === today.getMonth()) && (expDate.getFullYear() === today.getFullYear());
-                        
-                        // Si la fecha de compra es MAYOR al día de corte en el mes actual -> Pasa al mes siguiente
                         if (isSameMonthAndYear && expDate.getDate() > cutDay) {
                             isNextCycle = true;
                         }
@@ -503,6 +531,7 @@
                     const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
                     const numIdentifier = c.num ? `<span class="text-indigo-200 ml-1 font-mono text-[10px]">• ${c.num}</span>` : '';
+                    const dates = getCardDates(c.cut, c.pay);
 
                     return `
                     <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
@@ -517,8 +546,8 @@
                             
                             <div class="mt-4 pt-4 border-t border-slate-700/80 flex flex-col gap-3">
                                 <div class="flex justify-between text-xs px-1">
-                                    <span class="text-slate-300">Corte: <b class="text-white bg-slate-700 px-2 py-0.5 rounded">Día ${c.cut || '--'}</b></span>
-                                    <span class="text-slate-300">Pago: <b class="text-indigo-200 bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-500/30">Día ${c.pay || '--'}</b></span>
+                                    <span class="text-slate-300">Último Corte: <b class="text-white bg-slate-700 px-2 py-0.5 rounded">${dates.cutStr}</b></span>
+                                    <span class="text-slate-300">Límite Pago: <b class="text-indigo-200 bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-500/30">${dates.payStr}</b></span>
                                 </div>
                                 
                                 <div class="grid grid-cols-2 gap-3 mt-1">
@@ -788,6 +817,22 @@
             }
         }
 
+        // --- MOTOR DE AUTOGUARDADO INVISIBLE ---
+        function startAutoSave() {
+            if (autoSaveInterval) clearInterval(autoSaveInterval);
+            autoSaveInterval = setInterval(() => {
+                const token = gapi.client?.getToken()?.access_token;
+                if (token) {
+                    console.log('Autoguardando silenciosamente en Drive...');
+                    saveToDriveCore(true); // silent = true asegura que el usuario no vea popups
+                }
+            }, 600000); // 600,000 ms = 10 Minutos
+        }
+
+        function stopAutoSave() {
+            if (autoSaveInterval) clearInterval(autoSaveInterval);
+        }
+
         function checkExistingAuth() {
             if (isGapiReady && isGisReady) {
                 const token = localStorage.getItem('gdrive_token');
@@ -795,6 +840,7 @@
                 if(token && exp && Date.now() < parseInt(exp)) {
                     gapi.client.setToken({ access_token: token });
                     updateAuthUI(true);
+                    startAutoSave(); // Inicia autoguardado si la sesión es válida
                     
                     const sessionData = sessionStorage.getItem('finanz_data_cloud_session');
                     if (sessionData) {
@@ -816,6 +862,7 @@
                         localStorage.setItem('gdrive_token', resp.access_token);
                         localStorage.setItem('gdrive_token_exp', Date.now() + (resp.expires_in * 1000));
                         updateAuthUI(true);
+                        startAutoSave(); // Inicia autoguardado al loguearse manualmente
                         loadFromDrive(false, true); 
                     } 
                 }
@@ -885,6 +932,7 @@
 
         async function handleSignOut() {
             if(confirm("¿Cerrar sesión?\n\nSe respaldará tu información en la nube y volverás a tu perfil de Uso Local.")) {
+                stopAutoSave(); // Detiene el autoguardado
                 await saveToDriveCore(true);
                 
                 const token = gapi.client.getToken();
