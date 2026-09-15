@@ -24,7 +24,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 14</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 15</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -40,6 +40,17 @@
         <!-- ================= INICIO (DASHBOARD) ================= -->
         <section id="sec-dashboard" class="space-y-4">
             
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Ingresos Totales</p>
+                    <h2 id="val-incomes" class="text-xl font-bold text-emerald-600 mt-1">$0.00</h2>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Total Abonado a TC</p>
+                    <h2 id="val-paid" class="text-xl font-bold text-rose-500 mt-1">$0.00</h2>
+                </div>
+            </div>
+
             <!-- TARJETA GLOBAL SALDO Y COMPROMISOS -->
             <div class="bg-slate-800 p-6 rounded-3xl text-white shadow-xl border border-slate-700">
                 <p class="text-indigo-300 text-xs font-bold uppercase tracking-wider">Saldo Líquido (Débito/Efectivo)</p>
@@ -71,7 +82,7 @@
                 <div class="mt-4 pt-4 border-t border-slate-700">
                     <details class="group">
                         <summary class="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center cursor-pointer select-none">
-                            Ver Resumen de Deudas <i class="fas fa-chevron-down group-open:rotate-180 transition-transform ml-1"></i>
+                            Ver Resumen de Deudas de Tarjetas <i class="fas fa-chevron-down group-open:rotate-180 transition-transform ml-1"></i>
                         </summary>
                         <div class="grid grid-cols-2 gap-3 mt-3">
                             <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700">
@@ -356,7 +367,7 @@
                 <div class="p-2.5 bg-rose-50 rounded-xl border border-rose-100">
                     <label class="flex items-center gap-2 text-xs font-bold text-rose-700 cursor-pointer select-none">
                         <input type="checkbox" id="e-suspicious" onchange="document.getElementById('e-susp-wrap').classList.toggle('hidden', !this.checked)" class="w-4 h-4 text-rose-600 rounded">
-                        ¿Sospechoso / No reconocido?
+                        ¿Marcar como Sospechoso / No reconocido?
                     </label>
                     <div id="e-susp-wrap" class="hidden mt-2">
                         <textarea id="e-suspicious-info" placeholder="Agrega información para investigar o reclamar..." class="w-full p-2 rounded-lg border border-rose-200 text-xs outline-none bg-white h-16 resize-none"></textarea>
@@ -484,7 +495,7 @@
 
         function init() { loadLocalProfile(); }
 
-        // MIGRACIÓN MÁGICA: Protege y adapta datos viejos a la nueva versión sin borrarlos
+        // Protege y adapta datos viejos a la nueva versión sin borrarlos
         function migrateState(d) {
             if(!d) d = getEmptyState();
             if(!d.cards) d.cards = [];
@@ -496,7 +507,6 @@
             if(!d.services) d.services = [];
             if(!d.domiciled) d.domiciled = [];
             
-            // Si no hay cuentas de débito (primera vez o actualización), crear la principal
             if(d.debitAccounts.length === 0) {
                 d.debitAccounts.push({id: 'general', name: 'Efectivo / Cuenta General'});
             }
@@ -535,8 +545,7 @@
             if (data) {
                 try { state = migrateState(JSON.parse(data)); } catch(e) { state = migrateState(getEmptyState()); }
             } else { 
-                // Busca en las versiones anteriores por si acabas de actualizar
-                const old = localStorage.getItem('finanz_data_local_v6') || localStorage.getItem('finanz_data_v5');
+                const old = localStorage.getItem('finanz_data_local_v6') || localStorage.getItem('finanz_data_v5') || localStorage.getItem('finanz_data_v4');
                 if(old) { try { state = migrateState(JSON.parse(old)); saveToStorageOnly(); } catch(e) { state = migrateState(getEmptyState()); } }
                 else { state = migrateState(getEmptyState()); }
             }
@@ -571,173 +580,33 @@
         }
 
         function render() {
-            let globalRealDebt = 0; let globalRealPay = 0;
-            let totalExpensesOriginal = 0; let globalMonthReq = 0;
+            try {
+                let globalRealDebt = 0; let globalRealPay = 0;
+                let totalExpensesOriginal = 0; let globalMonthReq = 0;
 
-            // Procesar Tarjetas y Suscripciones Domiciliadas
-            state.cards.forEach(c => {
-                globalRealDebt += parseFloat(c.realDebt || 0);
-                globalRealPay += parseFloat(c.realPay || 0);
+                state.cards.forEach(c => {
+                    globalRealDebt += parseFloat(c.realDebt || 0);
+                    globalRealPay += parseFloat(c.realPay || 0);
 
-                let cardMonthReq = 0;
-                let cardGrossDebt = 0;
+                    let cardMonthReq = 0;
+                    let cardGrossDebt = 0;
 
-                const exps = state.expenses.filter(e => e.cardId === c.id);
-                exps.forEach(e => {
-                    const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
-                    let isNextCycle = false;
-                    if (c.cut && e.date) {
-                        const cutDay = parseInt(c.cut);
-                        const expDate = new Date(e.date + 'T12:00:00');
-                        const today = new Date();
-                        if (expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear() && expDate.getDate() > cutDay) isNextCycle = true;
-                    }
-
-                    if (e.type === 'msi') {
-                        const m = parseInt(e.months) || 1;
-                        let curr = parseInt(e.currentMonth) || 1;
-                        if(curr > m) curr = m;
-                        const mReq = totalConInt / m;
-                        if (!isNextCycle) cardMonthReq += mReq;
-                        cardGrossDebt += mReq * (m - curr + 1);
-                    } else {
-                        if (!isNextCycle) cardMonthReq += totalConInt;
-                        cardGrossDebt += totalConInt;
-                    }
-                });
-
-                // Sumar domiciliados activos a las tarjetas
-                const myDoms = state.domiciled.filter(d => d.cardId === c.id && d.active);
-                myDoms.forEach(d => {
-                    cardMonthReq += parseFloat(d.amount || 0);
-                    cardGrossDebt += parseFloat(d.amount || 0);
-                });
-
-                totalExpensesOriginal += cardGrossDebt;
-                globalMonthReq += cardMonthReq;
-            });
-
-            // Procesar Cuentas de Débito
-            let totalCashAvailable = 0;
-            const debitBalances = {};
-            state.debitAccounts.forEach(d => debitBalances[d.id] = 0);
-            
-            state.incomes.forEach(i => {
-                const t = i.targetId || 'general';
-                if(debitBalances[t] !== undefined) debitBalances[t] += parseFloat(i.amount||0);
-            });
-            state.cashExpenses.forEach(e => {
-                const t = e.accountId || 'general';
-                if(debitBalances[t] !== undefined) debitBalances[t] -= parseFloat(e.amount||0);
-            });
-            
-            const totalPaidToCC = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
-            state.payments.forEach(p => {
-                const t = p.sourceId || 'general';
-                if(debitBalances[t] !== undefined) debitBalances[t] -= parseFloat(p.amount||0);
-            });
-
-            for(let key in debitBalances) { totalCashAvailable += debitBalances[key]; }
-            const totalIncomesSum = state.incomes.reduce((a,b) => a+parseFloat(b.amount||0), 0);
-
-            // Calcular y Renderizar el Total General del Mes
-            let srvTotal = state.services.reduce((a,b) => a + parseFloat(b.amount||0), 0);
-            const totalCompromises = globalMonthReq + srvTotal;
-            const freeMoney = totalCashAvailable - totalCompromises;
-
-            document.getElementById('val-total-cards').innerText = fmt(globalMonthReq);
-            document.getElementById('val-total-services').innerText = fmt(srvTotal);
-            document.getElementById('val-total-compromises').innerText = "-" + fmt(totalCompromises);
-            document.getElementById('val-free-money').innerText = fmt(freeMoney);
-
-            // Renderizado Totales Básicos
-            document.getElementById('val-incomes').innerText = fmt(totalIncomesSum);
-            document.getElementById('val-paid').innerText = fmt(totalPaidToCC);
-            document.getElementById('val-available').innerText = fmt(totalCashAvailable);
-            
-            document.getElementById('val-real-debt').innerText = fmt(globalRealDebt);
-            document.getElementById('val-real-pay').innerText = fmt(globalRealPay);
-            const netDebt = Math.max(0, totalExpensesOriginal - totalPaidToCC);
-            document.getElementById('val-debt').innerText = fmt(netDebt);
-            document.getElementById('val-month').innerText = fmt(globalMonthReq);
-
-            // --- RENDER SERVICIOS ---
-            const divSrv = document.getElementById('list-services');
-            divSrv.innerHTML = state.services.length === 0 ? `<div class="p-4 text-center text-gray-400 text-xs italic">Sin servicios registrados.</div>` : state.services.map(s => {
-                const isVar = s.type === 'variable';
-                return `
-                <div class="p-4 flex flex-col gap-2 border-b border-gray-50 last:border-none text-xs">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-700">${s.name}</span>
-                            <span class="text-[9px] px-1.5 py-0.5 rounded uppercase ${isVar?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'}">${isVar?'Variable':'Fijo'}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="editService(${s.id})" class="text-blue-500"><i class="fas fa-edit"></i></button>
-                            <button onclick="del('services', ${s.id})" class="text-rose-400"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                    ${isVar ? `
-                        <div class="flex items-center gap-2 mt-1">
-                            <input type="number" step="0.01" value="${s.amount}" onchange="quickUpdateService(${s.id}, this.value)" class="w-24 p-1.5 bg-gray-100 rounded border border-gray-200 outline-none focus:ring-1 focus:ring-amber-500 text-xs font-bold text-slate-800" placeholder="Recibo">
-                            <span class="text-[10px] text-gray-400 italic">Actualiza el monto de este mes</span>
-                        </div>
-                    ` : `<span class="font-bold text-slate-800">${fmt(s.amount)}</span>`}
-                </div>
-                `;
-            }).join('');
-
-            // --- RENDER DÉBITO / EFECTIVO ---
-            const divDebit = document.getElementById('list-debit-accounts');
-            divDebit.innerHTML = state.debitAccounts.map(d => `
-                <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="font-bold text-indigo-900 text-xs">${d.name}</span>
-                        ${d.id !== 'general' ? `<button onclick="del('debitAccounts', '${d.id}')" class="text-indigo-300 hover:text-rose-400"><i class="fas fa-times"></i></button>` : ''}
-                    </div>
-                    <span class="text-lg font-bold text-indigo-700">${fmt(debitBalances[d.id])}</span>
-                </div>
-            `).join('');
-
-            // --- RENDER GASTOS CASH (DASHBOARD) ---
-            const divCash = document.getElementById('list-cash-expenses');
-            const recentCash = [...state.cashExpenses].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0, 10);
-            divCash.innerHTML = recentCash.length === 0 ? `<div class="py-4 text-center text-gray-400 text-xs italic">Sin gastos directos.</div>` : recentCash.map(e => {
-                const acc = state.debitAccounts.find(a => a.id == e.accountId) || {name:'General'};
-                return `
-                <div class="py-3 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
-                    <div>
-                        <p class="font-bold text-slate-700">${e.desc}</p>
-                        <p class="text-[9px] text-gray-400 mt-0.5"><i class="fas fa-wallet"></i> ${acc.name} • ${e.date}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold text-rose-500">-${fmt(e.amount)}</span>
-                        <button onclick="del('cashExpenses', ${e.id})" class="text-rose-300 hover:text-rose-500"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `}).join('');
-
-            // --- RENDER TARJETAS ---
-            const divCards = document.getElementById('list-cards');
-            if (state.cards.length === 0) {
-                divCards.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-dashed text-sm">No tienes tarjetas registradas en este perfil.</div>`;
-            } else {
-                divCards.innerHTML = state.cards.map(c => {
-                    const myExps = state.expenses.filter(e => e.cardId === c.id);
-                    const myPays = state.payments.filter(p => p.cardId === c.id);
-                    const myDoms = state.domiciled.filter(d => d.cardId === c.id && d.active);
-                    
-                    let cardGrossDebt = 0; let cardMonthReq = 0;
-                    myExps.forEach(e => {
+                    const exps = state.expenses.filter(e => e.cardId === c.id);
+                    exps.forEach(e => {
                         const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
                         let isNextCycle = false;
                         if (c.cut && e.date) {
-                            const expDate = new Date(e.date + 'T12:00:00'); const today = new Date();
-                            if (expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear() && expDate.getDate() > parseInt(c.cut)) isNextCycle = true;
+                            const cutDay = parseInt(c.cut);
+                            const expDate = new Date(e.date + 'T12:00:00');
+                            const today = new Date();
+                            if (expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear() && expDate.getDate() > cutDay) isNextCycle = true;
                         }
+
                         if (e.type === 'msi') {
-                            const m = parseInt(e.months) || 1; let curr = parseInt(e.currentMonth) || 1; if(curr > m) curr = m;
-                            let mReq = totalConInt / m;
+                            const m = parseInt(e.months) || 1;
+                            let curr = parseInt(e.currentMonth) || 1;
+                            if(curr > m) curr = m;
+                            const mReq = totalConInt / m;
                             if (!isNextCycle) cardMonthReq += mReq;
                             cardGrossDebt += mReq * (m - curr + 1);
                         } else {
@@ -746,151 +615,301 @@
                         }
                     });
 
-                    myDoms.forEach(d => { cardMonthReq += parseFloat(d.amount); cardGrossDebt += parseFloat(d.amount); });
-                    const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
-                    const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
-                    const numIdentifier = c.num ? `<span class="text-indigo-200 ml-1 font-mono text-[10px]">• ${c.num}</span>` : '';
-                    const dates = getCardDates(c.cut, c.pay);
+                    const myDoms = state.domiciled.filter(d => d.cardId === c.id && d.active);
+                    myDoms.forEach(d => {
+                        cardMonthReq += parseFloat(d.amount || 0);
+                        cardGrossDebt += parseFloat(d.amount || 0);
+                    });
 
-                    return `
-                    <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                        <div class="bg-slate-800 p-4 text-white">
-                            <div class="flex justify-between items-start">
-                                <div><h3 class="font-bold text-base leading-tight">${c.name}</h3><p class="text-[11px] text-slate-300 mt-0.5">${c.bank || 'Sin banco'} ${numIdentifier}</p></div>
-                                <div class="flex gap-2">
-                                    <button onclick="editCard(${c.id})" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg text-slate-200 transition"><i class="fas fa-pen"></i></button>
+                    totalExpensesOriginal += cardGrossDebt;
+                    globalMonthReq += cardMonthReq;
+                });
+
+                let totalCashAvailable = 0;
+                const debitBalances = {};
+                state.debitAccounts.forEach(d => debitBalances[d.id] = 0);
+                
+                state.incomes.forEach(i => {
+                    const t = i.targetId || 'general';
+                    if(debitBalances[t] !== undefined) debitBalances[t] += parseFloat(i.amount||0);
+                });
+                state.cashExpenses.forEach(e => {
+                    const t = e.accountId || 'general';
+                    if(debitBalances[t] !== undefined) debitBalances[t] -= parseFloat(e.amount||0);
+                });
+                
+                const totalPaidToCC = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+                state.payments.forEach(p => {
+                    const t = p.sourceId || 'general';
+                    if(debitBalances[t] !== undefined) debitBalances[t] -= parseFloat(p.amount||0);
+                });
+
+                for(let key in debitBalances) { totalCashAvailable += debitBalances[key]; }
+                const totalIncomesSum = state.incomes.reduce((a,b) => a+parseFloat(b.amount||0), 0);
+
+                let srvTotal = state.services.reduce((a,b) => a + parseFloat(b.amount||0), 0);
+                const totalCompromises = globalMonthReq + srvTotal;
+                const freeMoney = totalCashAvailable - totalCompromises;
+
+                if(document.getElementById('val-incomes')) document.getElementById('val-incomes').innerText = fmt(totalIncomesSum);
+                if(document.getElementById('val-paid')) document.getElementById('val-paid').innerText = fmt(totalPaidToCC);
+                if(document.getElementById('val-available')) document.getElementById('val-available').innerText = fmt(totalCashAvailable);
+                if(document.getElementById('val-total-cards')) document.getElementById('val-total-cards').innerText = fmt(globalMonthReq);
+                if(document.getElementById('val-total-services')) document.getElementById('val-total-services').innerText = fmt(srvTotal);
+                if(document.getElementById('val-total-compromises')) document.getElementById('val-total-compromises').innerText = "-" + fmt(totalCompromises);
+                if(document.getElementById('val-free-money')) document.getElementById('val-free-money').innerText = fmt(freeMoney);
+                
+                if(document.getElementById('val-real-debt')) document.getElementById('val-real-debt').innerText = fmt(globalRealDebt);
+                if(document.getElementById('val-real-pay')) document.getElementById('val-real-pay').innerText = fmt(globalRealPay);
+                const netDebt = Math.max(0, totalExpensesOriginal - totalPaidToCC);
+                if(document.getElementById('val-debt')) document.getElementById('val-debt').innerText = fmt(netDebt);
+                if(document.getElementById('val-month')) document.getElementById('val-month').innerText = fmt(globalMonthReq);
+
+                // --- RENDER SERVICIOS ---
+                const divSrv = document.getElementById('list-services');
+                if(divSrv) {
+                    divSrv.innerHTML = state.services.length === 0 ? `<div class="p-4 text-center text-gray-400 text-xs italic">Sin servicios registrados.</div>` : state.services.map(s => {
+                        const isVar = s.type === 'variable';
+                        return `
+                        <div class="p-4 flex flex-col gap-2 border-b border-gray-50 last:border-none text-xs">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-700">${s.name}</span>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded uppercase ${isVar?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'}">${isVar?'Variable':'Fijo'}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="editService(${s.id})" class="text-blue-500"><i class="fas fa-edit"></i></button>
+                                    <button onclick="del('services', ${s.id})" class="text-rose-400"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
-                            
-                            <div class="mt-4 pt-4 border-t border-slate-700/80 flex flex-col gap-3">
-                                <div class="flex justify-between text-xs px-1">
-                                    <span class="text-slate-300">Corte: <b class="text-white bg-slate-700 px-2 py-0.5 rounded">${dates.cutStr}</b></span>
-                                    <span class="text-slate-300">Pago: <b class="text-indigo-200 bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-500/30">${dates.payStr}</b></span>
+                            ${isVar ? `
+                                <div class="flex items-center gap-2 mt-1">
+                                    <input type="number" step="0.01" value="${s.amount}" onchange="quickUpdateService(${s.id}, this.value)" class="w-24 p-1.5 bg-gray-100 rounded border border-gray-200 outline-none focus:ring-1 focus:ring-amber-500 text-xs font-bold text-slate-800" placeholder="Recibo">
+                                    <span class="text-[10px] text-gray-400 italic">Actualiza el monto de este mes</span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3 mt-1">
-                                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 flex flex-col gap-2">
-                                        <span class="text-slate-400 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-mobile-alt mr-1"></i> Banco</span>
-                                        <div class="flex flex-col"><span class="text-slate-400 text-[10px]">Deuda:</span><span class="text-white text-sm font-semibold">${fmt(c.realDebt)}</span></div>
-                                        <div class="flex flex-col border-t border-slate-700/50 pt-1.5"><span class="text-slate-400 text-[10px]">Pago p/no int:</span><span class="text-rose-400 text-sm font-bold">${fmt(c.realPay)}</span></div>
-                                    </div>
-                                    <div class="bg-indigo-900/20 p-3 rounded-xl border border-indigo-500/30 flex flex-col gap-2">
-                                        <span class="text-indigo-300 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-calculator mr-1"></i> Calculado</span>
-                                        <div class="flex flex-col"><span class="text-indigo-300/70 text-[10px]">Deuda Rest:</span><span class="text-emerald-400 text-sm font-semibold">${fmt(cardCurrentDebt)}</span></div>
-                                        <div class="flex flex-col border-t border-indigo-500/30 pt-1.5"><span class="text-indigo-300/70 text-[10px]">PAGO MES:</span><span class="text-indigo-300 text-lg font-bold">${fmt(cardMonthReq)}</span></div>
-                                    </div>
-                                </div>
+                            ` : `<span class="font-bold text-slate-800">${fmt(s.amount)}</span>`}
+                        </div>
+                        `;
+                    }).join('');
+                }
+
+                // --- RENDER DÉBITO ---
+                const divDebit = document.getElementById('list-debit-accounts');
+                if(divDebit) {
+                    divDebit.innerHTML = state.debitAccounts.map(d => `
+                        <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex flex-col justify-between">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-indigo-900 text-xs">${d.name}</span>
+                                ${d.id !== 'general' ? `<button onclick="del('debitAccounts', '${d.id}')" class="text-indigo-300 hover:text-rose-400"><i class="fas fa-times"></i></button>` : ''}
+                            </div>
+                            <span class="text-lg font-bold text-indigo-700">${fmt(debitBalances[d.id])}</span>
+                        </div>
+                    `).join('');
+                }
+
+                // --- RENDER GASTOS CASH ---
+                const divCash = document.getElementById('list-cash-expenses');
+                if(divCash) {
+                    const recentCash = [...state.cashExpenses].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0, 10);
+                    divCash.innerHTML = recentCash.length === 0 ? `<div class="py-4 text-center text-gray-400 text-xs italic">Sin gastos directos.</div>` : recentCash.map(e => {
+                        const acc = state.debitAccounts.find(a => a.id == e.accountId) || {name:'General'};
+                        return `
+                        <div class="py-3 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
+                            <div>
+                                <p class="font-bold text-slate-700">${e.desc}</p>
+                                <p class="text-[9px] text-gray-400 mt-0.5"><i class="fas fa-wallet"></i> ${acc.name} • ${e.date}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-rose-500">-${fmt(e.amount)}</span>
+                                <button onclick="del('cashExpenses', ${e.id})" class="text-rose-300 hover:text-rose-500"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
-                        
-                        <!-- PESTAÑA DESGLOSE MOVIMIENTOS -->
-                        <details class="group p-4 space-y-2">
-                            <summary class="text-[11px] font-bold uppercase text-indigo-500 tracking-wider cursor-pointer flex justify-between items-center bg-indigo-50 p-2 rounded-lg">
-                                <span><i class="fas fa-list-ul mr-1"></i> Desglose de Movimientos</span>
-                                <i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i>
-                            </summary>
-                            <div class="pt-2 space-y-2 border-t border-gray-50 mt-3">
-                                ${myDoms.length > 0 ? `<div class="bg-blue-50 p-2 rounded text-xs mb-2 border border-blue-100"><span class="text-blue-700 font-bold"><i class="fas fa-sync mr-1"></i> +${fmt(myDoms.reduce((a,b)=>a+parseFloat(b.amount),0))} de Domiciliados activos</span></div>` : ''}
-                                ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Sin registros</p>' : ''}
-                                ${myExps.map(e => {
-                                    let isNextCycle = false;
-                                    if (c.cut && e.date) {
-                                        const expDate = new Date(e.date + 'T12:00:00'); const today = new Date();
-                                        if (expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear() && expDate.getDate() > parseInt(c.cut)) isNextCycle = true;
-                                    }
-                                    const nextCycleBadge = isNextCycle ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-violet-100 text-violet-700 font-bold">Salta Mes</span>` : '';
-                                    const statusBadge = e.status === 'reflected' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 font-bold">Reflejada</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 font-bold">Nueva</span>`;
-                                    const classBadge = e.classification === 'deuda' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-slate-200 text-slate-600 font-bold">Deuda Ant.</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 font-bold">Compra</span>`;
-                                    const totalConInt = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
-                                    const m = parseInt(e.months) || 1; const curr = parseInt(e.currentMonth) || 1;
-                                    const planText = e.type === 'msi' ? `<b class="text-indigo-600 bg-indigo-50 px-1 rounded">${fmt(totalConInt/m)}/m</b> (P: ${curr}/${m})` : '<span class="bg-gray-100 px-1 rounded text-gray-500">Contado</span>';
+                    `}).join('');
+                }
 
-                                    const suspiciousAlert = e.isSuspicious ? `
-                                    <details class="mt-2 bg-rose-50 p-2 rounded border border-rose-200 cursor-pointer">
-                                        <summary class="text-[10px] text-rose-700 font-bold outline-none flex items-center justify-between"><span class="flex items-center gap-1"><i class="fas fa-exclamation-triangle"></i> Sospechoso / Investigar</span> <i class="fas fa-caret-down text-rose-400"></i></summary>
-                                        <p class="mt-1 text-rose-800 text-[10px] font-mono leading-tight">${e.suspiciousInfo || 'Sin detalles extra.'}</p>
-                                    </details>` : '';
+                // --- RENDER TARJETAS ---
+                const divCards = document.getElementById('list-cards');
+                if(divCards) {
+                    if (state.cards.length === 0) {
+                        divCards.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-dashed text-sm">No tienes tarjetas registradas en este perfil.</div>`;
+                    } else {
+                        divCards.innerHTML = state.cards.map(c => {
+                            const myExps = state.expenses.filter(e => e.cardId === c.id);
+                            const myPays = state.payments.filter(p => p.cardId === c.id);
+                            const myDoms = state.domiciled.filter(d => d.cardId === c.id && d.active);
+                            
+                            let cardGrossDebt = 0; let cardMonthReq = 0;
+                            myExps.forEach(e => {
+                                const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
+                                let isNextCycle = false;
+                                if (c.cut && e.date) {
+                                    const expDate = new Date(e.date + 'T12:00:00'); const today = new Date();
+                                    if (expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear() && expDate.getDate() > parseInt(c.cut)) isNextCycle = true;
+                                }
+                                if (e.type === 'msi') {
+                                    const m = parseInt(e.months) || 1; let curr = parseInt(e.currentMonth) || 1; if(curr > m) curr = m;
+                                    let mReq = totalConInt / m;
+                                    if (!isNextCycle) cardMonthReq += mReq;
+                                    cardGrossDebt += mReq * (m - curr + 1);
+                                } else {
+                                    if (!isNextCycle) cardMonthReq += totalConInt;
+                                    cardGrossDebt += totalConInt;
+                                }
+                            });
 
-                                    return `
-                                    <div class="flex flex-col text-xs py-3 border-b border-gray-100 last:border-none">
-                                        <div class="flex justify-between items-start">
-                                            <div class="flex-1 pr-2">
-                                                <div class="flex flex-wrap gap-1 mb-1 items-center">
-                                                    <p class="font-bold text-slate-700 mr-1">${e.desc}</p>
-                                                    ${classBadge} ${statusBadge} ${nextCycleBadge}
-                                                </div>
-                                                <div class="text-[10px] text-gray-500 flex items-center gap-2"><span><i class="far fa-calendar-alt"></i> ${e.date || '--'}</span><span>•</span><span>${planText}</span></div>
+                            myDoms.forEach(d => { cardMonthReq += parseFloat(d.amount); cardGrossDebt += parseFloat(d.amount); });
+                            const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
+                            const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
+                            const numIdentifier = c.num ? `<span class="text-indigo-200 ml-1 font-mono text-[10px]">• ${c.num}</span>` : '';
+                            const dates = getCardDates(c.cut, c.pay);
+
+                            return `
+                            <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+                                <div class="bg-slate-800 p-4 text-white">
+                                    <div class="flex justify-between items-start">
+                                        <div><h3 class="font-bold text-base leading-tight">${c.name}</h3><p class="text-[11px] text-slate-300 mt-0.5">${c.bank || 'Sin banco'} ${numIdentifier}</p></div>
+                                        <div class="flex gap-2">
+                                            <button onclick="editCard(${c.id})" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg text-slate-200 transition"><i class="fas fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4 pt-4 border-t border-slate-700/80 flex flex-col gap-3">
+                                        <div class="flex justify-between text-xs px-1">
+                                            <span class="text-slate-300">Corte: <b class="text-white bg-slate-700 px-2 py-0.5 rounded">${dates.cutStr}</b></span>
+                                            <span class="text-slate-300">Pago: <b class="text-indigo-200 bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-500/30">${dates.payStr}</b></span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-3 mt-1">
+                                            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 flex flex-col gap-2">
+                                                <span class="text-slate-400 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-mobile-alt mr-1"></i> Banco</span>
+                                                <div class="flex flex-col"><span class="text-slate-400 text-[10px]">Deuda:</span><span class="text-white text-sm font-semibold">${fmt(c.realDebt)}</span></div>
+                                                <div class="flex flex-col border-t border-slate-700/50 pt-1.5"><span class="text-slate-400 text-[10px]">Pago p/no int:</span><span class="text-rose-400 text-sm font-bold">${fmt(c.realPay)}</span></div>
                                             </div>
-                                            <div class="flex items-center gap-2">
-                                                <div class="text-right">
-                                                    <span class="font-bold text-slate-800 block">${fmt(e.amount)} Tot</span>
-                                                </div>
-                                                <div class="flex flex-col gap-1">
-                                                    <button onclick="editExp(${e.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button>
-                                                    <button onclick="del('expenses', ${e.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button>
-                                                </div>
+                                            <div class="bg-indigo-900/20 p-3 rounded-xl border border-indigo-500/30 flex flex-col gap-2">
+                                                <span class="text-indigo-300 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-calculator mr-1"></i> Calculado</span>
+                                                <div class="flex flex-col"><span class="text-indigo-300/70 text-[10px]">Deuda Rest:</span><span class="text-emerald-400 text-sm font-semibold">${fmt(cardCurrentDebt)}</span></div>
+                                                <div class="flex flex-col border-t border-indigo-500/30 pt-1.5"><span class="text-indigo-300/70 text-[10px]">PAGO MES:</span><span class="text-indigo-300 text-lg font-bold">${fmt(cardMonthReq)}</span></div>
                                             </div>
                                         </div>
-                                        ${suspiciousAlert}
-                                    </div>`;
-                                }).join('')}
-                                <div class="pt-4 flex justify-end"><button onclick="del('cards', ${c.id})" class="text-[10px] text-rose-500 font-semibold hover:underline"><i class="fas fa-times-circle"></i> Eliminar tarjeta</button></div>
+                                    </div>
+                                </div>
+                                
+                                <details class="group p-4 space-y-2">
+                                    <summary class="text-[11px] font-bold uppercase text-indigo-500 tracking-wider cursor-pointer flex justify-between items-center bg-indigo-50 p-2 rounded-lg">
+                                        <span><i class="fas fa-list-ul mr-1"></i> Desglose de Movimientos</span>
+                                        <i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i>
+                                    </summary>
+                                    <div class="pt-2 space-y-2 border-t border-gray-50 mt-3">
+                                        ${myDoms.length > 0 ? `<div class="bg-blue-50 p-2 rounded text-xs mb-2 border border-blue-100"><span class="text-blue-700 font-bold"><i class="fas fa-sync mr-1"></i> +${fmt(myDoms.reduce((a,b)=>a+parseFloat(b.amount),0))} de Domiciliados activos</span></div>` : ''}
+                                        ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Borra tus compras de contado que ya pagaste para no inflar tu cálculo.</p>' : ''}
+                                        ${myExps.map(e => {
+                                            let isNextCycle = false;
+                                            if (c.cut && e.date) {
+                                                const expDate = new Date(e.date + 'T12:00:00'); const today = new Date();
+                                                if (expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear() && expDate.getDate() > parseInt(c.cut)) isNextCycle = true;
+                                            }
+                                            const nextCycleBadge = isNextCycle ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-violet-100 text-violet-700 font-bold">Salta Mes</span>` : '';
+                                            const statusBadge = e.status === 'reflected' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 font-bold">Reflejada</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 font-bold">Nueva</span>`;
+                                            const classBadge = e.classification === 'deuda' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-slate-200 text-slate-600 font-bold">Deuda Ant.</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 font-bold">Compra</span>`;
+                                            const totalConInt = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
+                                            const m = parseInt(e.months) || 1; const curr = parseInt(e.currentMonth) || 1;
+                                            const planText = e.type === 'msi' ? `<b class="text-indigo-600 bg-indigo-50 px-1 rounded">${fmt(totalConInt/m)}/m</b> (P: ${curr}/${m})` : '<span class="bg-gray-100 px-1 rounded text-gray-500">Contado</span>';
+
+                                            const suspiciousAlert = e.isSuspicious ? `
+                                            <details class="mt-2 bg-rose-50 p-2 rounded border border-rose-200 cursor-pointer">
+                                                <summary class="text-[10px] text-rose-700 font-bold outline-none flex items-center justify-between"><span class="flex items-center gap-1"><i class="fas fa-exclamation-triangle"></i> Sospechoso / Investigar</span> <i class="fas fa-caret-down text-rose-400"></i></summary>
+                                                <p class="mt-1 text-rose-800 text-[10px] font-mono leading-tight">${e.suspiciousInfo || 'Sin detalles extra.'}</p>
+                                            </details>` : '';
+
+                                            return `
+                                            <div class="flex flex-col text-xs py-3 border-b border-gray-100 last:border-none">
+                                                <div class="flex justify-between items-start">
+                                                    <div class="flex-1 pr-2">
+                                                        <div class="flex flex-wrap gap-1 mb-1 items-center">
+                                                            <p class="font-bold text-slate-700 mr-1">${e.desc}</p>
+                                                            ${classBadge} ${statusBadge} ${nextCycleBadge}
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-500 flex items-center gap-2"><span><i class="far fa-calendar-alt"></i> ${e.date || '--'}</span><span>•</span><span>${planText}</span></div>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="text-right">
+                                                            <span class="font-bold text-slate-800 block">${fmt(e.amount)} Tot</span>
+                                                        </div>
+                                                        <div class="flex flex-col gap-1">
+                                                            <button onclick="editExp(${e.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button>
+                                                            <button onclick="del('expenses', ${e.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                ${suspiciousAlert}
+                                            </div>`;
+                                        }).join('')}
+                                    </div>
+                                </details>
+                            </div>`;
+                        }).join('');
+                    }
+                }
+
+                // --- RENDER DOMICILIADOS ---
+                const divDom = document.getElementById('list-domiciled');
+                if(divDom) {
+                    divDom.innerHTML = state.domiciled.length === 0 ? `<div class="p-4 text-center text-gray-400 text-xs italic">No hay domiciliados registrados.</div>` : state.domiciled.map(d => {
+                        const card = state.cards.find(c => c.id == d.cardId);
+                        return `
+                        <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
+                            <div class="flex gap-3 items-center">
+                                <label class="relative inline-flex items-center cursor-pointer" title="Activar/Desactivar Cobro">
+                                    <input type="checkbox" class="sr-only peer" ${d.active ? 'checked' : ''} onchange="toggleDomiciled(${d.id})">
+                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                                </label>
+                                <div>
+                                    <span class="font-bold ${d.active?'text-slate-800':'text-gray-400'}">${d.name}</span>
+                                    <p class="text-[9px] text-gray-400 mt-0.5"><i class="fas fa-credit-card"></i> ${card ? card.name : '?'}</p>
+                                </div>
                             </div>
-                        </details>
-                    </div>`;
-                }).join('');
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold ${d.active?'text-blue-600':'text-gray-400'}">${fmt(d.amount)}/m</span>
+                                <button onclick="del('domiciled', ${d.id})" class="text-rose-400"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+
+                const divIncomes = document.getElementById('list-incomes');
+                if(divIncomes) {
+                    const sortedIncomes = [...state.incomes].sort((a,b) => new Date(b.date) - new Date(a.date));
+                    divIncomes.innerHTML = sortedIncomes.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>` : sortedIncomes.map(i => {
+                        const acc = state.debitAccounts.find(a => a.id == i.targetId) || {name: 'General'};
+                        const tag = i.frequency === 'monthly' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-indigo-100 text-indigo-700"><i class="fas fa-sync-alt"></i> Plantilla</span>` : '';
+                        return `
+                        <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1"><span class="font-bold text-slate-700">${i.desc}</span>${tag}</div>
+                                <p class="text-[9px] text-gray-400"><i class="fas fa-wallet"></i> ${acc.name} • <i class="far fa-calendar-alt"></i> ${i.date}</p>
+                            </div>
+                            <div class="flex items-center gap-2"><span class="font-bold text-emerald-600 mr-2">+${fmt(i.amount)}</span><button onclick="editIncome(${i.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
+                        </div>`
+                    }).join('');
+                }
+
+                const divPayments = document.getElementById('list-payments');
+                if(divPayments) {
+                    divPayments.innerHTML = state.payments.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay abonos registrados.</div>` : state.payments.map(p => {
+                        const card = state.cards.find(c => c.id === p.cardId);
+                        const acc = state.debitAccounts.find(a => a.id == p.sourceId) || {name: 'General'};
+                        return `
+                        <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
+                            <div>
+                                <span class="font-bold text-slate-800">Abono a: ${card ? card.name : '?'}</span>
+                                <p class="text-[9px] text-gray-400 mt-0.5">Desde: ${acc.name} • <i class="far fa-calendar-alt"></i> ${p.date}</p>
+                            </div>
+                            <div class="flex items-center gap-2"><span class="font-bold text-rose-500 mr-2">-${fmt(p.amount)}</span><button onclick="editPay(${p.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('payments', ${p.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
+                        </div>`;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error("Error durante el dibujado de la app:", err);
             }
-
-            // --- RENDER DOMICILIADOS ---
-            const divDom = document.getElementById('list-domiciled');
-            divDom.innerHTML = state.domiciled.length === 0 ? `<div class="p-4 text-center text-gray-400 text-xs italic">No hay domiciliados registrados.</div>` : state.domiciled.map(d => {
-                const card = state.cards.find(c => c.id == d.cardId);
-                return `
-                <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
-                    <div class="flex gap-3 items-center">
-                        <label class="relative inline-flex items-center cursor-pointer" title="Activar/Desactivar Cobro">
-                            <input type="checkbox" class="sr-only peer" ${d.active ? 'checked' : ''} onchange="toggleDomiciled(${d.id})">
-                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
-                        </label>
-                        <div>
-                            <span class="font-bold ${d.active?'text-slate-800':'text-gray-400'}">${d.name}</span>
-                            <p class="text-[9px] text-gray-400 mt-0.5"><i class="fas fa-credit-card"></i> ${card ? card.name : '?'}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold ${d.active?'text-blue-600':'text-gray-400'}">${fmt(d.amount)}/m</span>
-                        <button onclick="del('domiciled', ${d.id})" class="text-rose-400"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            const divIncomes = document.getElementById('list-incomes');
-            const sortedIncomes = [...state.incomes].sort((a,b) => new Date(b.date) - new Date(a.date));
-            divIncomes.innerHTML = sortedIncomes.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>` : sortedIncomes.map(i => {
-                const acc = state.debitAccounts.find(a => a.id == i.targetId) || {name: 'General'};
-                const tag = i.frequency === 'monthly' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-indigo-100 text-indigo-700"><i class="fas fa-sync-alt"></i> Plantilla</span>` : '';
-                return `
-                <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1"><span class="font-bold text-slate-700">${i.desc}</span>${tag}</div>
-                        <p class="text-[9px] text-gray-400"><i class="fas fa-wallet"></i> ${acc.name} • <i class="far fa-calendar-alt"></i> ${i.date}</p>
-                    </div>
-                    <div class="flex items-center gap-2"><span class="font-bold text-emerald-600 mr-2">+${fmt(i.amount)}</span><button onclick="editIncome(${i.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
-                </div>`
-            }).join('');
-
-            const divPayments = document.getElementById('list-payments');
-            divPayments.innerHTML = state.payments.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay abonos registrados.</div>` : state.payments.map(p => {
-                const card = state.cards.find(c => c.id === p.cardId);
-                const acc = state.debitAccounts.find(a => a.id == p.sourceId) || {name: 'General'};
-                return `
-                <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none">
-                    <div>
-                        <span class="font-bold text-slate-800">Abono a: ${card ? card.name : '?'}</span>
-                        <p class="text-[9px] text-gray-400 mt-0.5">Desde: ${acc.name} • <i class="far fa-calendar-alt"></i> ${p.date}</p>
-                    </div>
-                    <div class="flex items-center gap-2"><span class="font-bold text-rose-500 mr-2">-${fmt(p.amount)}</span><button onclick="editPay(${p.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('payments', ${p.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
-                </div>`;
-            }).join('');
         }
 
         function showSec(id) { ['dashboard', 'cards', 'payments', 'incomes'].forEach(s => { document.getElementById('sec-'+s).classList.toggle('hidden', s !== id); document.getElementById('nav-'+s).classList.toggle('active-tab', s === id); }); }
@@ -1055,7 +1074,12 @@
 
             if(source.startsWith('debit_')) {
                 const accId = source.split('_')[1];
-                state.cashExpenses.push({ id: Date.now(), accountId: accId, desc, amount, date });
+                if(id) {
+                    const cx = state.cashExpenses.find(x => x.id === Number(id));
+                    if(cx) { cx.desc = desc; cx.amount = amount; cx.date = date; cx.accountId = accId; }
+                } else {
+                    state.cashExpenses.push({ id: Date.now(), accountId: accId, desc, amount, date });
+                }
             } else {
                 const cardId = parseInt(source.split('_')[1]);
                 const classification = document.getElementById('e-class').value;
