@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4338ca"> <!-- Pinta la barra del celular color índigo -->
     <title>FinanzApp PRO</title>
+    
+    <!-- PRE-CONEXIONES PARA ACELERAR CARGA EN DATOS MÓVILES -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://apis.google.com">
+    
+    <!-- Estilos asíncronos para no bloquear la pantalla -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
@@ -24,7 +33,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 21</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">V-22 MÓVIL</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -42,7 +51,7 @@
             
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Ingresos Totales (Confirmados)</p>
+                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Ingresos Confirmados</p>
                     <h2 id="val-incomes" class="text-xl font-bold text-emerald-600 mt-1">$0.00</h2>
                 </div>
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
@@ -232,6 +241,7 @@
                 </div>
             </div>
 
+            <!-- EXCLUSIVO TARJETA DE CRÉDITO EN EL ATAJO -->
             <div id="u-cc-fields" class="hidden space-y-4 border-t border-gray-200 pt-4 mt-2">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -589,7 +599,6 @@
             const now = new Date();
             const todayStr = getTodayString(); 
 
-            // Revisar mes actual y anterior por seguridad
             const monthsToCheck = [ new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 1) ];
 
             state.incomes.forEach(tpl => {
@@ -1163,8 +1172,12 @@
         async function loadFromDrive(silent = false, isJustLoggedIn = false) { try { const token = gapi.client.getToken()?.access_token; if(!token) return; const response = await gapi.client.drive.files.list({ q: "name = 'finanzapp_cloud.json' and trashed = false", fields: 'files(id, name)' }); const file = response.result.files?.[0]; if(file) { const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } }); const cloudData = await res.json(); if(silent) { state = migrateState(cloudData); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } else { let msg = isJustLoggedIn ? "Acabas de iniciar sesión y encontramos datos en tu nube. ¿Deseas descargarlos?\n\n(Si eliges Cancelar, se mantendrán los datos locales que tienes ahora en pantalla y podrás subirlos a tu Drive)." : "Se encontraron datos en la nube. ¿Deseas descargarlos y sobreescribir tu sesión actual?"; if(confirm(msg)) { state = migrateState(cloudData); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } else if (isJustLoggedIn) { sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); } } } else if(!silent) { alert("No se encontró ningún respaldo anterior en Drive. Usa 'Subir' para crear uno nuevo."); } } catch(err) {} }
         async function handleSignOut() { if(confirm("¿Cerrar sesión?\n\nSe respaldará tu información en la nube y volverás a tu perfil de Uso Local.")) { stopAutoSave(); await saveToDriveCore(true); const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token, () => {}); gapi.client.setToken(''); } localStorage.removeItem('gdrive_token'); localStorage.removeItem('gdrive_token_exp'); sessionStorage.removeItem('finanz_data_cloud_session'); updateAuthUI(false); loadLocalProfile(); } }
 
-        window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && gapi.client?.getToken()?.access_token) saveToDriveCore(true); });
-        window.onload = init;
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && gapi.client?.getToken()?.access_token) saveToDriveCore(true); });
+        
+        // ¡ARRANQUE INMEDIATO OFFLINE-FIRST!
+        // Al colocar init() aquí en lugar de window.onload, la app lee la memoria local al instante.
+        // Google Drive cargará en segundo plano cuando el celular recupere la señal.
+        init();
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
