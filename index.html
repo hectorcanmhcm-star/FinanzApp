@@ -24,7 +24,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 19</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 20</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -185,7 +185,6 @@
                     <h2 class="font-bold text-slate-700 text-sm"><i class="fas fa-exchange-alt text-blue-500 mr-1"></i> Movimientos (Débito/Efectivo)</h2>
                     <div class="flex gap-2 items-center">
                         <button onclick="openIncomeModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Ingresar Dinero"><i class="fas fa-arrow-down"></i></button>
-                        <button onclick="openCashExpModal()" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Gasto Efectivo"><i class="fas fa-arrow-up"></i></button>
                         <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform ml-1"></i>
                     </div>
                 </summary>
@@ -387,6 +386,7 @@
                 </div>
             </div>
 
+            <!-- GASTO SOSPECHOSO -->
             <div class="p-2.5 bg-rose-50 rounded-xl border border-rose-100 mt-2">
                 <label class="flex items-center gap-2 text-xs font-bold text-rose-700 cursor-pointer select-none">
                     <input type="checkbox" id="e-suspicious" onchange="document.getElementById('e-susp-wrap').classList.toggle('hidden', !this.checked)" class="w-4 h-4 text-rose-600 rounded">
@@ -501,7 +501,7 @@
     </div>
 
     <div id="modal-pay" class="modal-bg"><div class="modal-content space-y-4"><h3 id="modal-pay-title" class="font-bold text-lg text-slate-800">Abonar a Tarjeta de Crédito</h3><input type="hidden" id="p-id"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Pagar a la Tarjeta:</label><select id="p-card" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Desde (Débito):</label><select id="p-source" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label><input type="date" id="p-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-xs"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label><input type="number" step="0.01" id="p-amount" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div></div><div class="flex gap-2 pt-2"><button onclick="savePay()" class="flex-1 bg-emerald-500 text-white p-3 rounded-xl font-bold">Guardar Abono</button><button onclick="closeModal('modal-pay')" class="p-3 text-gray-400">Cancelar</button></div></div></div>
-    <div id="modal-income" class="modal-bg"><div class="modal-content space-y-4"><h3 id="modal-income-title" class="font-bold text-lg text-slate-800">Registrar Ingreso a Débito</h3><input type="hidden" id="i-id"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto</label><input type="text" id="i-desc" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Destino (Cuenta Débito)</label><select id="i-target" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Frecuencia</label><select id="i-frequency" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"><option value="monthly">Mensual recurrente (Plantilla)</option><option value="unique">Ingreso único</option></select></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label><input type="number" step="0.01" id="i-amount" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha Inicial</label><input type="date" id="i-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-xs focus:ring-2 focus:ring-emerald-500"></div></div><div class="flex gap-2 pt-2"><button onclick="saveIncome()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition">Guardar Ingreso</button><button onclick="closeModal('modal-income')" class="p-3 text-gray-400">Cancelar</button></div></div></div>
+    <div id="modal-income" class="modal-bg"><div class="modal-content space-y-4"><h3 id="modal-income-title" class="font-bold text-lg text-slate-800">Registrar Ingreso</h3><input type="hidden" id="i-id"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto</label><input type="text" id="i-desc" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Destino (Cuenta Débito)</label><select id="i-target" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></select></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Frecuencia</label><select id="i-frequency" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"><option value="monthly">Mensual recurrente (Plantilla)</option><option value="unique">Ingreso único</option></select></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label><input type="number" step="0.01" id="i-amount" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"></div><div><label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label><input type="date" id="i-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-xs focus:ring-2 focus:ring-emerald-500"></div></div><div class="flex gap-2 pt-2"><button onclick="saveIncome()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition">Guardar Ingreso</button><button onclick="closeModal('modal-income')" class="p-3 text-gray-400">Cancelar</button></div></div></div>
 
     <script>
         const CLIENT_ID = '764556873375-etu7k4dnc1o6uimg7kvai1m18v06s61i.apps.googleusercontent.com';
@@ -656,7 +656,7 @@
                 if(divDebit) {
                     divDebit.innerHTML = state.debitAccounts.map(d => `
                         <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex flex-col justify-between">
-                            <div class="flex justify-between items-start mb-2"><span class="font-bold text-indigo-900 text-xs">${d.name}</span>${d.id !== 'general' ? `<button onclick="del('debitAccounts', '${d.id}')" class="text-indigo-300 hover:text-rose-400"><i class="fas fa-times"></i></button>` : ''}</div>
+                            <div class="flex justify-between items-start mb-2"><span class="font-bold text-indigo-900 text-xs">${d.name}</span>${d.id !== 'general' ? `<button onclick="del('debitAccounts', ${d.id})" class="text-indigo-300 hover:text-rose-400"><i class="fas fa-times"></i></button>` : ''}</div>
                             <span class="text-lg font-bold text-indigo-700">${fmt(debitBalances[d.id])}</span>
                         </div>
                     `).join('');
@@ -958,7 +958,19 @@
         function openIncomeModal() { document.getElementById('modal-income-title').innerText = "Nuevo Ingreso"; document.getElementById('i-id').value = ''; document.getElementById('i-desc').value = ''; document.getElementById('i-amount').value = ''; document.getElementById('i-target').innerHTML = state.debitAccounts.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); document.getElementById('i-frequency').value = 'monthly'; document.getElementById('i-date').value = getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
         function editIncome(id) { const i = state.incomes.find(x => x.id === Number(id)); if(!i) return; document.getElementById('modal-income-title').innerText = "Editar Ingreso"; document.getElementById('i-id').value = i.id; document.getElementById('i-desc').value = i.desc; document.getElementById('i-amount').value = i.amount; document.getElementById('i-frequency').value = i.frequency || 'monthly'; document.getElementById('i-date').value = i.date || getTodayString(); document.getElementById('modal-income').style.display = 'flex'; }
         function saveIncome() { const desc = document.getElementById('i-desc').value.trim() || 'Ingreso'; const targetId = document.getElementById('i-target').value; const amount = parseFloat(document.getElementById('i-amount').value) || 0; const frequency = document.getElementById('i-frequency').value; const date = document.getElementById('i-date').value || getTodayString(); if(amount <= 0) return; state.incomes.push({ id: Date.now(), desc, targetId, amount, frequency, date }); save(); closeModal('modal-income'); }
-        function del(type, id) { let keyId = type === 'debitAccounts' ? id : Number(id); if(confirm('¿Seguro que deseas eliminar?')) { state[type] = state[type].filter(i => i.id !== keyId); if(type === 'cards') { state.expenses = state.expenses.filter(e => e.cardId !== keyId); state.payments = state.payments.filter(p => p.cardId !== keyId); state.domiciled = state.domiciled.filter(d=>d.sourceId === 'credit_'+keyId); } save(); } }
+        
+        // --- FUNCIÓN DE ELIMINADO UNIVERSAL CORREGIDA ---
+        function del(type, id) { 
+            if(confirm('¿Seguro que deseas eliminar?')) { 
+                state[type] = state[type].filter(i => String(i.id) !== String(id)); 
+                if(type === 'cards') { 
+                    state.expenses = state.expenses.filter(e => String(e.cardId) !== String(id)); 
+                    state.payments = state.payments.filter(p => String(p.cardId) !== String(id)); 
+                    state.domiciled = state.domiciled.filter(d => String(d.cardId) !== String(id) && d.sourceId !== 'credit_'+id); 
+                } 
+                save(); 
+            } 
+        }
 
         // --- MANEJO DE DRIVE ---
         function updateAuthUI(isLoggedIn) { document.getElementById('btn-login').classList.toggle('hidden', isLoggedIn); document.getElementById('btn-sync').classList.toggle('hidden', !isLoggedIn); document.getElementById('btn-pull').classList.toggle('hidden', !isLoggedIn); document.getElementById('btn-logout').classList.toggle('hidden', !isLoggedIn); const badge = document.getElementById('mode-badge'); if(isLoggedIn) { badge.innerText = 'Drive Seguro'; badge.className = 'text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full shadow-sm font-bold'; } else { badge.innerText = 'Uso Local'; badge.className = 'text-[10px] bg-slate-500 px-2 py-0.5 rounded-full shadow-sm font-bold'; } }
@@ -980,4 +992,3 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
 </html>
-    
