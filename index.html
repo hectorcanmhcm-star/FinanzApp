@@ -22,7 +22,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 9</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 10</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -115,7 +115,6 @@
                     <i class="fas fa-plus"></i> Ingreso
                 </button>
             </div>
-            <!-- Explicación de Ingresos Mensuales -->
             <p class="text-xs text-slate-400 italic px-2"><i class="fas fa-info-circle"></i> Los ingresos marcados como "Mensual recurrente" generan automáticamente su pago cada mes en su fecha asignada.</p>
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 divide-y divide-gray-100" id="list-incomes"></div>
         </section>
@@ -232,7 +231,6 @@
                 </select>
             </div>
             
-            <!-- PANEL MSI MEJORADO -->
             <div id="msi-div" class="hidden space-y-3">
                 <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 space-y-3">
                     <div class="grid grid-cols-2 gap-3">
@@ -250,7 +248,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="text-[11px] font-semibold text-indigo-800 block mb-1" title="Si actualizas este número, la app descuenta automáticamente los meses pasados. No necesitas registrarlos como Abonos.">Vas en el pago: <i class="fas fa-info-circle"></i></label>
+                            <label class="text-[11px] font-semibold text-indigo-800 block mb-1">Vas en el pago: <i class="fas fa-info-circle"></i></label>
                             <input type="number" id="e-current-month" oninput="updateSimMonthly()" placeholder="Ej. 1" value="1" class="w-full p-2 bg-white rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
                         </div>
                         <div>
@@ -347,14 +345,12 @@
 
         function init() { loadLocalProfile(); }
 
-        // --- MOTOR DE GENERACIÓN AUTOMÁTICA DE INGRESOS MENSUALES ---
         function checkAndGenerateIncomes() {
             let changed = false;
             const todayStr = getTodayString();
             
             state.incomes.forEach(i => {
                 if(i.frequency === 'monthly') {
-                    // Si no tiene nextDate, lo inicializamos 1 mes después de su creación
                     if(!i.nextDate) {
                         let d = new Date(i.date + 'T12:00:00');
                         d.setMonth(d.getMonth() + 1);
@@ -362,17 +358,15 @@
                         changed = true;
                     }
                     
-                    // Si el nextDate ya pasó o es hoy, generamos el ingreso de este mes
                     while(i.nextDate <= todayStr) {
                         state.incomes.push({
                             id: Date.now() + Math.floor(Math.random()*10000),
-                            desc: i.desc, // Clonamos la descripción
-                            amount: i.amount, // Clonamos el monto actual de la plantilla
-                            frequency: 'unique', // Lo hacemos único para que se pueda editar sin afectar la plantilla
+                            desc: i.desc,
+                            amount: i.amount, 
+                            frequency: 'unique', 
                             date: i.nextDate
                         });
                         
-                        // Avanzamos el próximo cobro 1 mes
                         let d = new Date(i.nextDate + 'T12:00:00');
                         d.setMonth(d.getMonth() + 1);
                         i.nextDate = d.toISOString().split('T')[0];
@@ -389,7 +383,6 @@
                 try { state = JSON.parse(data); } catch(e) { state = getEmptyState(); }
             } else { state = getEmptyState(); }
             
-            // Generamos ingresos automáticos al abrir
             if(checkAndGenerateIncomes()) { saveToStorageOnly(); }
             render();
         }
@@ -408,7 +401,6 @@
         function fmt(n) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0); }
 
         function render() {
-            // Incomes ahora suma TODO (Plantillas originales y las copias generadas automáticamente)
             const totalInc = state.incomes.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
             const totalPaid = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
             let totalExpensesOriginal = 0;
@@ -424,6 +416,21 @@
                 const exps = state.expenses.filter(e => e.cardId === c.id);
                 exps.forEach(e => {
                     const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
+                    
+                    // EVALUACIÓN DE CORTE (REGLA DE SALTO DE MES)
+                    let isNextCycle = false;
+                    if (c.cut && e.date) {
+                        const cutDay = parseInt(c.cut);
+                        const expDate = new Date(e.date + 'T12:00:00');
+                        const today = new Date();
+                        const isSameMonthAndYear = (expDate.getMonth() === today.getMonth()) && (expDate.getFullYear() === today.getFullYear());
+                        
+                        // Si la fecha de compra es MAYOR al día de corte en el mes actual -> Pasa al mes siguiente
+                        if (isSameMonthAndYear && expDate.getDate() > cutDay) {
+                            isNextCycle = true;
+                        }
+                    }
+
                     let remainingItemDebt = totalConInt;
                     let monthReq = 0;
 
@@ -431,12 +438,12 @@
                         const m = parseInt(e.months) || 1;
                         let curr = parseInt(e.currentMonth) || 1;
                         if(curr > m) curr = m;
-                        
-                        monthReq = totalConInt / m;
-                        // Calcula DEUDA RESTANTE basada en la mensualidad actual (solo suma los meses que faltan)
-                        remainingItemDebt = monthReq * (m - curr + 1);
+
+                        const mReq = totalConInt / m;
+                        remainingItemDebt = mReq * (m - curr + 1);
+                        if (!isNextCycle) monthReq = mReq;
                     } else {
-                        monthReq = totalConInt;
+                        if (!isNextCycle) monthReq = totalConInt;
                     }
 
                     totalExpensesOriginal += remainingItemDebt;
@@ -468,15 +475,27 @@
 
                     myExps.forEach(e => {
                         const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
+                        
+                        let isNextCycle = false;
+                        if (c.cut && e.date) {
+                            const cutDay = parseInt(c.cut);
+                            const expDate = new Date(e.date + 'T12:00:00');
+                            const today = new Date();
+                            const isSameMonthAndYear = (expDate.getMonth() === today.getMonth()) && (expDate.getFullYear() === today.getFullYear());
+                            if (isSameMonthAndYear && expDate.getDate() > cutDay) {
+                                isNextCycle = true;
+                            }
+                        }
+
                         if (e.type === 'msi') {
                             const m = parseInt(e.months) || 1;
                             let curr = parseInt(e.currentMonth) || 1;
                             if(curr > m) curr = m;
                             let mReq = totalConInt / m;
-                            cardMonthReq += mReq;
+                            if (!isNextCycle) cardMonthReq += mReq;
                             cardGrossDebt += mReq * (m - curr + 1);
                         } else {
-                            cardMonthReq += totalConInt;
+                            if (!isNextCycle) cardMonthReq += totalConInt;
                             cardGrossDebt += totalConInt;
                         }
                     });
@@ -521,13 +540,27 @@
                             <p class="text-[11px] font-bold uppercase text-gray-400 tracking-wider">Desglose de Movimientos</p>
                             ${myExps.length === 0 ? '<p class="text-xs text-gray-400 py-1 italic">Sin registros</p>' : ''}
                             ${myExps.map(e => {
+                                let isNextCycle = false;
+                                if (c.cut && e.date) {
+                                    const cutDay = parseInt(c.cut);
+                                    const expDate = new Date(e.date + 'T12:00:00');
+                                    const today = new Date();
+                                    if (expDate.getMonth() === today.getMonth() && expDate.getFullYear() === today.getFullYear() && expDate.getDate() > cutDay) {
+                                        isNextCycle = true;
+                                    }
+                                }
+
+                                const nextCycleBadge = isNextCycle 
+                                    ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-violet-100 text-violet-700 font-bold border border-violet-200" title="Al ser después de tu corte, no se cobra en este mes">Salta Mes</span>` 
+                                    : '';
+
                                 const statusBadge = e.status === 'reflected' 
-                                    ? `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 font-bold border border-emerald-200">Reflejada</span>` 
-                                    : `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 font-bold border border-amber-200">Nueva</span>`;
+                                    ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 font-bold border border-emerald-200">Reflejada</span>` 
+                                    : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 font-bold border border-amber-200">Nueva</span>`;
                                 
                                 const classBadge = e.classification === 'deuda'
-                                    ? `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-slate-100 text-slate-600 font-bold border border-slate-200">Deuda Ant.</span>`
-                                    : `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 font-bold border border-blue-200">Compra</span>`;
+                                    ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-slate-100 text-slate-600 font-bold border border-slate-200">Deuda Ant.</span>`
+                                    : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 font-bold border border-blue-200">Compra</span>`;
 
                                 const totalConInt = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
                                 const m = parseInt(e.months) || 1;
@@ -543,7 +576,7 @@
                                     <div class="flex-1 pr-2">
                                         <div class="flex flex-wrap gap-1 mb-1 items-center">
                                             <p class="font-bold text-slate-700 mr-1">${e.desc}</p>
-                                            ${classBadge} ${statusBadge}
+                                            ${classBadge} ${statusBadge} ${nextCycleBadge}
                                         </div>
                                         <div class="text-[11px] text-gray-500 flex items-center gap-2">
                                             <span><i class="far fa-calendar-alt"></i> ${e.date || '--'}</span>
@@ -571,12 +604,11 @@
             }
 
             const divIncomes = document.getElementById('list-incomes');
-            // Ordenar ingresos por fecha (los más recientes primero)
             const sortedIncomes = [...state.incomes].sort((a,b) => new Date(b.date) - new Date(a.date));
             divIncomes.innerHTML = sortedIncomes.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>` : sortedIncomes.map(i => {
                 const isTemplate = i.frequency === 'monthly';
                 const tag = isTemplate 
-                    ? `<span class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700"><i class="fas fa-sync-alt mr-1"></i>Plantilla Mensual</span>` 
+                    ? `<span class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700"><i class="fas fa-sync-alt mr-1"></i>Plantilla Activa</span>` 
                     : `<span class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700">Ingreso Registrado</span>`;
                 
                 return `
@@ -628,11 +660,9 @@
             const interest = type === 'contado' ? 0 : (parseFloat(document.getElementById('e-int').value) || 0);
 
             if (type === 'msi' && mode === 'monthly') {
-                // Si ingreso la mensualidad directo, ese es el pago mes (asumiendo que le aplicamos interés sobre eso)
                 let monthlyFee = amount * (1 + (interest / 100));
                 document.getElementById('sim-monthly-val').innerText = fmt(monthlyFee) + ` / mes`;
             } else {
-                // Modo total
                 let total = amount * (1 + (interest / 100));
                 let monthly = total / months;
                 document.getElementById('sim-monthly-val').innerText = fmt(monthly) + (months > 1 ? ` / mes` : '');
@@ -681,7 +711,6 @@
             const mode = e.msiMode || 'total';
             document.getElementById('e-msi-mode').value = mode;
             
-            // Si originalmente capturó la mensualidad, mostramos la matemática inversa para no confundirlo
             if (mode === 'monthly' && e.type === 'msi') {
                 document.getElementById('e-amount').value = (e.amount / (e.months || 1)).toFixed(2);
             } else {
@@ -720,7 +749,6 @@
             
             if(amount <= 0) return alert('Ingresa monto válido'); 
             
-            // Si el usuario eligió ingresar "Mensualidad", multiplicamos internamente para guardar la base total
             if (type === 'msi' && msiMode === 'monthly') {
                 amount = amount * months;
             }
