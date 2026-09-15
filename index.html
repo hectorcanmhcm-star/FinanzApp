@@ -22,7 +22,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 8</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 9</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -57,7 +57,6 @@
                     <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">Resumen Global de Tarjetas</h3>
                     
                     <div class="grid grid-cols-2 gap-3">
-                        <!-- COLUMNA BANCOS (Suma de c.realDebt y c.realPay) -->
                         <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 flex flex-col gap-2">
                             <span class="text-slate-400 text-[9px] uppercase tracking-wider font-bold text-center"><i class="fas fa-university mr-1"></i> Apps Bancos</span>
                             <div class="flex justify-between items-center">
@@ -70,7 +69,6 @@
                             </div>
                         </div>
 
-                        <!-- COLUMNA APP (Calculada por la app) -->
                         <div class="bg-indigo-900/20 p-3 rounded-xl border border-indigo-500/30 flex flex-col gap-2">
                             <span class="text-indigo-300 text-[9px] uppercase tracking-wider font-bold text-center"><i class="fas fa-calculator mr-1"></i> Calculado</span>
                             <div class="flex justify-between items-center">
@@ -117,6 +115,8 @@
                     <i class="fas fa-plus"></i> Ingreso
                 </button>
             </div>
+            <!-- Explicación de Ingresos Mensuales -->
+            <p class="text-xs text-slate-400 italic px-2"><i class="fas fa-info-circle"></i> Los ingresos marcados como "Mensual recurrente" generan automáticamente su pago cada mes en su fecha asignada.</p>
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 divide-y divide-gray-100" id="list-incomes"></div>
         </section>
 
@@ -160,7 +160,7 @@
                         <input type="number" step="0.01" id="c-real-debt" placeholder="0.00" class="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
-                        <label class="text-[11px] font-semibold text-gray-500 block mb-1">Pago para no generar int. ($)</label>
+                        <label class="text-[11px] font-semibold text-gray-500 block mb-1">Pago para no int. ($)</label>
                         <input type="number" step="0.01" id="c-real-pay" placeholder="0.00" class="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
@@ -207,7 +207,7 @@
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Estado de Cuenta</label>
                     <select id="e-status" class="w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
-                        <option value="new">Nueva (Aún no refleja)</option>
+                        <option value="new">Nueva (No refleja)</option>
                         <option value="reflected">Ya Reflejada</option>
                     </select>
                 </div>
@@ -215,8 +215,8 @@
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto Total ($)</label>
-                    <input type="number" step="0.01" id="e-amount" oninput="updateSimMonthly()" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label id="label-e-amount" class="text-[11px] font-semibold text-gray-500 block mb-1">Monto Total ($)</label>
+                    <input type="number" step="0.01" id="e-amount" oninput="updateSimMonthly()" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold">
                 </div>
                 <div>
                     <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha de compra</label>
@@ -228,25 +228,43 @@
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Modalidad de pago</label>
                 <select id="e-type" onchange="toggleMsiDiv(this.value)" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="contado">Contado (1 solo pago)</option>
-                    <option value="msi">Meses (MSI / Intereses)</option>
+                    <option value="msi">A Meses (MSI / Intereses)</option>
                 </select>
             </div>
             
-            <div id="msi-div" class="hidden grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Meses</label>
-                    <input type="number" id="e-months" oninput="updateSimMonthly()" placeholder="Plazo" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Interés Total %</label>
-                    <input type="number" step="0.1" id="e-int" oninput="updateSimMonthly()" placeholder="0" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value="0">
+            <!-- PANEL MSI MEJORADO -->
+            <div id="msi-div" class="hidden space-y-3">
+                <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[11px] font-semibold text-indigo-800 block mb-1">¿Qué ingresaste arriba?</label>
+                            <select id="e-msi-mode" onchange="updateMsiLabels()" class="w-full p-2 bg-white rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-[11px]">
+                                <option value="total">Ingresé Monto Total</option>
+                                <option value="monthly">Ingresé Mensualidad</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-indigo-800 block mb-1">Plazo (Meses)</label>
+                            <input type="number" id="e-months" oninput="updateSimMonthly()" placeholder="Ej. 12" class="w-full p-2 bg-white rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[11px] font-semibold text-indigo-800 block mb-1" title="Si actualizas este número, la app descuenta automáticamente los meses pasados. No necesitas registrarlos como Abonos.">Vas en el pago: <i class="fas fa-info-circle"></i></label>
+                            <input type="number" id="e-current-month" oninput="updateSimMonthly()" placeholder="Ej. 1" value="1" class="w-full p-2 bg-white rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-indigo-800 block mb-1">Interés Total %</label>
+                            <input type="number" step="0.1" id="e-int" oninput="updateSimMonthly()" placeholder="0" class="w-full p-2 bg-white rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs" value="0">
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- SIMULADOR MENSUAL -->
-            <div id="sim-monthly-box" class="p-3 bg-indigo-50 rounded-xl border border-indigo-200 flex justify-between items-center text-indigo-900 shadow-sm mt-2">
-                <span class="text-xs font-semibold"><i class="fas fa-calculator mr-1"></i> Aporte Mensual:</span>
-                <span id="sim-monthly-val" class="font-bold text-indigo-700 text-lg">$0.00</span>
+            <div id="sim-monthly-box" class="p-3 bg-slate-800 rounded-xl border border-slate-700 flex justify-between items-center text-white shadow-sm mt-2">
+                <span class="text-xs font-semibold text-indigo-200"><i class="fas fa-calculator mr-1"></i> Aporte Mensual:</span>
+                <span id="sim-monthly-val" class="font-bold text-emerald-400 text-lg">$0.00</span>
             </div>
             
             <div class="flex gap-2 pt-2">
@@ -294,7 +312,7 @@
             <div>
                 <label class="text-[11px] font-semibold text-gray-500 block mb-1">Frecuencia</label>
                 <select id="i-frequency" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
-                    <option value="monthly">Mensual recurrente</option>
+                    <option value="monthly">Mensual recurrente (Plantilla)</option>
                     <option value="unique">Ingreso único</option>
                 </select>
             </div>
@@ -304,7 +322,7 @@
                     <input type="number" step="0.01" id="i-amount" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha Inicial</label>
                     <input type="date" id="i-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-xs">
                 </div>
             </div>
@@ -329,33 +347,73 @@
 
         function init() { loadLocalProfile(); }
 
+        // --- MOTOR DE GENERACIÓN AUTOMÁTICA DE INGRESOS MENSUALES ---
+        function checkAndGenerateIncomes() {
+            let changed = false;
+            const todayStr = getTodayString();
+            
+            state.incomes.forEach(i => {
+                if(i.frequency === 'monthly') {
+                    // Si no tiene nextDate, lo inicializamos 1 mes después de su creación
+                    if(!i.nextDate) {
+                        let d = new Date(i.date + 'T12:00:00');
+                        d.setMonth(d.getMonth() + 1);
+                        i.nextDate = d.toISOString().split('T')[0];
+                        changed = true;
+                    }
+                    
+                    // Si el nextDate ya pasó o es hoy, generamos el ingreso de este mes
+                    while(i.nextDate <= todayStr) {
+                        state.incomes.push({
+                            id: Date.now() + Math.floor(Math.random()*10000),
+                            desc: i.desc, // Clonamos la descripción
+                            amount: i.amount, // Clonamos el monto actual de la plantilla
+                            frequency: 'unique', // Lo hacemos único para que se pueda editar sin afectar la plantilla
+                            date: i.nextDate
+                        });
+                        
+                        // Avanzamos el próximo cobro 1 mes
+                        let d = new Date(i.nextDate + 'T12:00:00');
+                        d.setMonth(d.getMonth() + 1);
+                        i.nextDate = d.toISOString().split('T')[0];
+                        changed = true;
+                    }
+                }
+            });
+            return changed;
+        }
+
         function loadLocalProfile() {
             const data = localStorage.getItem('finanz_data_local_v6');
             if (data) {
                 try { state = JSON.parse(data); } catch(e) { state = getEmptyState(); }
             } else { state = getEmptyState(); }
+            
+            // Generamos ingresos automáticos al abrir
+            if(checkAndGenerateIncomes()) { saveToStorageOnly(); }
             render();
         }
 
-        function save() {
+        function saveToStorageOnly() {
             const token = typeof gapi !== 'undefined' && gapi.client && gapi.client.getToken()?.access_token;
-            if(token) {
-                sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state));
-            } else {
-                localStorage.setItem('finanz_data_local_v6', JSON.stringify(state));
-            }
+            if(token) sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state));
+            else localStorage.setItem('finanz_data_local_v6', JSON.stringify(state));
+        }
+
+        function save() {
+            saveToStorageOnly();
             render();
         }
 
         function fmt(n) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0); }
 
         function render() {
+            // Incomes ahora suma TODO (Plantillas originales y las copias generadas automáticamente)
             const totalInc = state.incomes.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
             const totalPaid = state.payments.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
             let totalExpensesOriginal = 0;
             let globalMonthReq = 0;
             
-            // Variables para el total bancario
             let globalRealDebt = 0;
             let globalRealPay = 0;
 
@@ -365,20 +423,33 @@
 
                 const exps = state.expenses.filter(e => e.cardId === c.id);
                 exps.forEach(e => {
-                    const total = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
-                    totalExpensesOriginal += total;
-                    globalMonthReq += (total / (parseInt(e.months) || 1));
+                    const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
+                    let remainingItemDebt = totalConInt;
+                    let monthReq = 0;
+
+                    if (e.type === 'msi') {
+                        const m = parseInt(e.months) || 1;
+                        let curr = parseInt(e.currentMonth) || 1;
+                        if(curr > m) curr = m;
+                        
+                        monthReq = totalConInt / m;
+                        // Calcula DEUDA RESTANTE basada en la mensualidad actual (solo suma los meses que faltan)
+                        remainingItemDebt = monthReq * (m - curr + 1);
+                    } else {
+                        monthReq = totalConInt;
+                    }
+
+                    totalExpensesOriginal += remainingItemDebt;
+                    globalMonthReq += monthReq;
                 });
             });
 
             const netDebt = Math.max(0, totalExpensesOriginal - totalPaid);
             
-            // Actualizar Tarjetas Principales Dashboard
             document.getElementById('val-incomes').innerText = fmt(totalInc);
             document.getElementById('val-paid').innerText = fmt(totalPaid);
             document.getElementById('val-available').innerText = fmt(totalInc - totalPaid);
             
-            // Actualizar Comparador Global
             document.getElementById('val-real-debt').innerText = fmt(globalRealDebt);
             document.getElementById('val-real-pay').innerText = fmt(globalRealPay);
             document.getElementById('val-debt').innerText = fmt(netDebt);
@@ -392,33 +463,39 @@
                     const myExps = state.expenses.filter(e => e.cardId === c.id);
                     const myPays = state.payments.filter(p => p.cardId === c.id);
                     
-                    const cardGrossDebt = myExps.reduce((acc, e) => acc + (parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100))), 0);
+                    let cardGrossDebt = 0;
+                    let cardMonthReq = 0;
+
+                    myExps.forEach(e => {
+                        const totalConInt = parseFloat(e.amount || 0) * (1 + (parseFloat(e.interest || 0) / 100));
+                        if (e.type === 'msi') {
+                            const m = parseInt(e.months) || 1;
+                            let curr = parseInt(e.currentMonth) || 1;
+                            if(curr > m) curr = m;
+                            let mReq = totalConInt / m;
+                            cardMonthReq += mReq;
+                            cardGrossDebt += mReq * (m - curr + 1);
+                        } else {
+                            cardMonthReq += totalConInt;
+                            cardGrossDebt += totalConInt;
+                        }
+                    });
+
                     const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
-
-                    // CÁLCULO MES TARJETA
-                    const cardMonthReq = myExps.reduce((acc, e) => {
-                        const total = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
-                        return acc + (total / (parseInt(e.months) || 1));
-                    }, 0);
-
                     const numIdentifier = c.num ? `<span class="text-indigo-200 ml-1 font-mono text-[10px]">• ${c.num}</span>` : '';
 
                     return `
                     <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
                         <div class="bg-slate-800 p-4 text-white">
                             <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-base leading-tight">${c.name}</h3>
-                                    <p class="text-[11px] text-slate-300 mt-0.5">${c.bank || 'Sin banco'} ${numIdentifier}</p>
-                                </div>
+                                <div><h3 class="font-bold text-base leading-tight">${c.name}</h3><p class="text-[11px] text-slate-300 mt-0.5">${c.bank || 'Sin banco'} ${numIdentifier}</p></div>
                                 <div class="flex gap-2">
                                     <button onclick="editCard(${c.id})" class="text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg text-slate-200 transition"><i class="fas fa-pen"></i></button>
                                     <button onclick="openExpModal(${c.id})" class="bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-lg text-xs font-bold transition shadow flex items-center gap-1"><i class="fas fa-plus"></i> Registrar</button>
                                 </div>
                             </div>
                             
-                            <!-- TABLA DE COMPARACIÓN EXACTA: BANCO VS APP (MEJORADA VISUALMENTE) -->
                             <div class="mt-4 pt-4 border-t border-slate-700/80 flex flex-col gap-3">
                                 <div class="flex justify-between text-xs px-1">
                                     <span class="text-slate-300">Corte: <b class="text-white bg-slate-700 px-2 py-0.5 rounded">Día ${c.cut || '--'}</b></span>
@@ -426,29 +503,15 @@
                                 </div>
                                 
                                 <div class="grid grid-cols-2 gap-3 mt-1">
-                                    <!-- COLUMNA BANCO -->
                                     <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 flex flex-col gap-2">
                                         <span class="text-slate-400 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-mobile-alt mr-1"></i> App del Banco</span>
-                                        <div class="flex flex-col">
-                                            <span class="text-slate-400 text-[10px]">Deuda Total:</span>
-                                            <span class="text-white text-sm font-semibold">${fmt(c.realDebt)}</span>
-                                        </div>
-                                        <div class="flex flex-col border-t border-slate-700/50 pt-1.5">
-                                            <span class="text-slate-400 text-[10px]">Pago p/no int:</span>
-                                            <span class="text-rose-400 text-sm font-bold">${fmt(c.realPay)}</span>
-                                        </div>
+                                        <div class="flex flex-col"><span class="text-slate-400 text-[10px]">Deuda Total:</span><span class="text-white text-sm font-semibold">${fmt(c.realDebt)}</span></div>
+                                        <div class="flex flex-col border-t border-slate-700/50 pt-1.5"><span class="text-slate-400 text-[10px]">Pago p/no int:</span><span class="text-rose-400 text-sm font-bold">${fmt(c.realPay)}</span></div>
                                     </div>
-                                    <!-- COLUMNA CALCULADA -->
                                     <div class="bg-indigo-900/20 p-3 rounded-xl border border-indigo-500/30 flex flex-col gap-2">
                                         <span class="text-indigo-300 text-[9px] uppercase tracking-wider font-bold"><i class="fas fa-calculator mr-1"></i> Calculado aquí</span>
-                                        <div class="flex flex-col">
-                                            <span class="text-indigo-300/70 text-[10px]">Deuda Restante:</span>
-                                            <span class="text-emerald-400 text-sm font-semibold">${fmt(cardCurrentDebt)}</span>
-                                        </div>
-                                        <div class="flex flex-col border-t border-indigo-500/30 pt-1.5">
-                                            <span class="text-indigo-300/70 text-[10px]">PAGO MES ESTIMADO:</span>
-                                            <span class="text-indigo-300 text-lg font-bold">${fmt(cardMonthReq)}</span>
-                                        </div>
+                                        <div class="flex flex-col"><span class="text-indigo-300/70 text-[10px]">Deuda Restante:</span><span class="text-emerald-400 text-sm font-semibold">${fmt(cardCurrentDebt)}</span></div>
+                                        <div class="flex flex-col border-t border-indigo-500/30 pt-1.5"><span class="text-indigo-300/70 text-[10px]">PAGO MES ESTIMADO:</span><span class="text-indigo-300 text-lg font-bold">${fmt(cardMonthReq)}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -467,10 +530,12 @@
                                     : `<span class="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 font-bold border border-blue-200">Compra</span>`;
 
                                 const totalConInt = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
-                                const cuotaMensual = totalConInt / (parseInt(e.months) || 1);
+                                const m = parseInt(e.months) || 1;
+                                const curr = parseInt(e.currentMonth) || 1;
+                                const cuotaMensual = totalConInt / m;
 
                                 const planText = e.type === 'msi' 
-                                    ? `<b class="text-indigo-600 bg-indigo-50 px-1 rounded">${fmt(cuotaMensual)}/m</b> (${e.months}m)` 
+                                    ? `<b class="text-indigo-600 bg-indigo-50 px-1 rounded">${fmt(cuotaMensual)}/m</b> (Pago ${curr}/${m})` 
                                     : '<span class="bg-gray-100 px-1 rounded text-gray-500">Contado</span>';
 
                                 return `
@@ -488,7 +553,7 @@
                                     </div>
                                     <div class="flex items-center gap-3">
                                         <div class="text-right">
-                                            <span class="font-bold text-slate-800 block leading-tight">${fmt(e.amount)}</span>
+                                            <span class="font-bold text-slate-800 block leading-tight">${fmt(e.amount)} Total</span>
                                             ${e.interest > 0 ? `<span class="text-[9px] text-rose-400">+${e.interest}% int.</span>` : ''}
                                         </div>
                                         <div class="flex flex-col gap-1">
@@ -506,15 +571,23 @@
             }
 
             const divIncomes = document.getElementById('list-incomes');
-            divIncomes.innerHTML = state.incomes.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>` : state.incomes.map(i => `
+            // Ordenar ingresos por fecha (los más recientes primero)
+            const sortedIncomes = [...state.incomes].sort((a,b) => new Date(b.date) - new Date(a.date));
+            divIncomes.innerHTML = sortedIncomes.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>` : sortedIncomes.map(i => {
+                const isTemplate = i.frequency === 'monthly';
+                const tag = isTemplate 
+                    ? `<span class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700"><i class="fas fa-sync-alt mr-1"></i>Plantilla Mensual</span>` 
+                    : `<span class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700">Ingreso Registrado</span>`;
+                
+                return `
                 <div class="p-4 flex justify-between items-center text-xs">
                     <div>
-                        <div class="flex items-center gap-2"><span class="text-sm font-bold text-slate-700">${i.desc}</span><span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${i.frequency === 'monthly' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">${i.frequency === 'monthly' ? 'Mensual' : 'Único'}</span></div>
-                        <p class="text-[10px] text-gray-400 mt-0.5"><i class="far fa-calendar-alt"></i> ${i.date || 'Sin fecha'}</p>
+                        <div class="flex flex-wrap items-center gap-2 mb-1"><span class="text-sm font-bold text-slate-700">${i.desc}</span>${tag}</div>
+                        <p class="text-[10px] text-gray-400"><i class="far fa-calendar-alt"></i> ${i.date || 'Sin fecha'}</p>
                     </div>
-                    <div class="flex gap-3 items-center"><span class="font-bold text-emerald-600 text-sm">+${fmt(i.amount)}</span><button onclick="editIncome(${i.id})" class="text-blue-500"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400"><i class="fas fa-trash"></i></button></div>
+                    <div class="flex gap-3 items-center"><span class="font-bold text-emerald-600 text-sm">+${fmt(i.amount)}</span><button onclick="editIncome(${i.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
                 </div>
-            `).join('');
+            `}).join('');
 
             const divPayments = document.getElementById('list-payments');
             divPayments.innerHTML = state.payments.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay abonos registrados.</div>` : state.payments.map(p => {
@@ -523,7 +596,7 @@
                 return `
                 <div class="p-4 flex justify-between items-center text-xs">
                     <div><span class="font-bold text-slate-800">${card ? card.name + numIdentifier : 'Tarjeta eliminada'}</span><p class="text-[10px] text-gray-400"><i class="far fa-calendar-alt"></i> ${p.date || 'Sin fecha'}</p></div>
-                    <div class="flex gap-3 items-center"><span class="font-bold text-rose-500 text-sm">-${fmt(p.amount)}</span><button onclick="editPay(${p.id})" class="text-blue-500"><i class="fas fa-edit"></i></button><button onclick="del('payments', ${p.id})" class="text-rose-400"><i class="fas fa-trash"></i></button></div>
+                    <div class="flex gap-3 items-center"><span class="font-bold text-rose-500 text-sm">-${fmt(p.amount)}</span><button onclick="editPay(${p.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('payments', ${p.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
                 </div>`;
             }).join('');
         }
@@ -531,72 +604,45 @@
         function showSec(id) { ['dashboard', 'cards', 'payments', 'incomes'].forEach(s => { document.getElementById('sec-'+s).classList.toggle('hidden', s !== id); document.getElementById('nav-'+s).classList.toggle('active-tab', s === id); }); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- CÁLCULO EN VIVO DEL SIMULADOR MENSUAL ---
+        // --- CÁLCULO Y ETIQUETAS EN VIVO DEL SIMULADOR MENSUAL ---
+        function updateMsiLabels() {
+            const mode = document.getElementById('e-msi-mode').value;
+            const label = document.getElementById('label-e-amount');
+            if(mode === 'total') label.innerText = "Monto TOTAL ($)";
+            else label.innerText = "Monto de CADA Mensualidad ($)";
+            updateSimMonthly();
+        }
+
         function toggleMsiDiv(type) {
             document.getElementById('msi-div').classList.toggle('hidden', type === 'contado');
+            if(type === 'contado') document.getElementById('label-e-amount').innerText = "Monto Total ($)";
+            else updateMsiLabels();
             updateSimMonthly();
         }
 
         function updateSimMonthly() {
-            const amount = parseFloat(document.getElementById('e-amount').value) || 0;
+            let amount = parseFloat(document.getElementById('e-amount').value) || 0;
             const type = document.getElementById('e-type').value;
+            const mode = document.getElementById('e-msi-mode').value;
             const months = type === 'contado' ? 1 : (parseInt(document.getElementById('e-months').value) || 1);
             const interest = type === 'contado' ? 0 : (parseFloat(document.getElementById('e-int').value) || 0);
 
-            const total = amount * (1 + (interest / 100));
-            const monthly = total / months;
-            document.getElementById('sim-monthly-val').innerText = fmt(monthly) + (months > 1 ? ` / mes` : '');
+            if (type === 'msi' && mode === 'monthly') {
+                // Si ingreso la mensualidad directo, ese es el pago mes (asumiendo que le aplicamos interés sobre eso)
+                let monthlyFee = amount * (1 + (interest / 100));
+                document.getElementById('sim-monthly-val').innerText = fmt(monthlyFee) + ` / mes`;
+            } else {
+                // Modo total
+                let total = amount * (1 + (interest / 100));
+                let monthly = total / months;
+                document.getElementById('sim-monthly-val').innerText = fmt(monthly) + (months > 1 ? ` / mes` : '');
+            }
         }
 
         // --- FUNCIONES CRUD TARJETAS ---
-        function openCardModal() { 
-            document.getElementById('modal-card-title').innerText = "Nueva Tarjeta"; 
-            document.getElementById('c-id').value = ''; 
-            document.getElementById('c-name').value = ''; 
-            document.getElementById('c-bank').value = ''; 
-            document.getElementById('c-num').value = ''; 
-            document.getElementById('c-real-debt').value = ''; 
-            document.getElementById('c-real-pay').value = ''; 
-            document.getElementById('c-cut').value = ''; 
-            document.getElementById('c-pay').value = ''; 
-            document.getElementById('modal-card').style.display = 'flex'; 
-        }
-
-        function editCard(id) { 
-            const c = state.cards.find(x => x.id === Number(id)); 
-            if(!c) return; 
-            document.getElementById('modal-card-title').innerText = "Editar Tarjeta"; 
-            document.getElementById('c-id').value = c.id; 
-            document.getElementById('c-name').value = c.name; 
-            document.getElementById('c-bank').value = c.bank || ''; 
-            document.getElementById('c-num').value = c.num || ''; 
-            document.getElementById('c-real-debt').value = c.realDebt || ''; 
-            document.getElementById('c-real-pay').value = c.realPay || ''; 
-            document.getElementById('c-cut').value = c.cut || ''; 
-            document.getElementById('c-pay').value = c.pay || ''; 
-            document.getElementById('modal-card').style.display = 'flex'; 
-        }
-
-        function saveCard() { 
-            const id = document.getElementById('c-id').value; 
-            const name = document.getElementById('c-name').value.trim(); 
-            const bank = document.getElementById('c-bank').value.trim(); 
-            const num = document.getElementById('c-num').value.trim(); 
-            const realDebt = parseFloat(document.getElementById('c-real-debt').value) || 0;
-            const realPay = parseFloat(document.getElementById('c-real-pay').value) || 0;
-            const cut = parseInt(document.getElementById('c-cut').value) || ''; 
-            const pay = parseInt(document.getElementById('c-pay').value) || ''; 
-            
-            if(!name) return alert('Ingresa nombre de la tarjeta'); 
-            
-            if(id) { 
-                const c = state.cards.find(x => x.id === Number(id)); 
-                if(c) { c.name = name; c.bank = bank; c.num = num; c.realDebt = realDebt; c.realPay = realPay; c.cut = cut; c.pay = pay; } 
-            } else { 
-                state.cards.push({ id: Date.now(), name, bank, num, realDebt, realPay, cut, pay }); 
-            } 
-            save(); closeModal('modal-card'); 
-        }
+        function openCardModal() { document.getElementById('modal-card-title').innerText = "Nueva Tarjeta"; document.getElementById('c-id').value = ''; document.getElementById('c-name').value = ''; document.getElementById('c-bank').value = ''; document.getElementById('c-num').value = ''; document.getElementById('c-real-debt').value = ''; document.getElementById('c-real-pay').value = ''; document.getElementById('c-cut').value = ''; document.getElementById('c-pay').value = ''; document.getElementById('modal-card').style.display = 'flex'; }
+        function editCard(id) { const c = state.cards.find(x => x.id === Number(id)); if(!c) return; document.getElementById('modal-card-title').innerText = "Editar Tarjeta"; document.getElementById('c-id').value = c.id; document.getElementById('c-name').value = c.name; document.getElementById('c-bank').value = c.bank || ''; document.getElementById('c-num').value = c.num || ''; document.getElementById('c-real-debt').value = c.realDebt || ''; document.getElementById('c-real-pay').value = c.realPay || ''; document.getElementById('c-cut').value = c.cut || ''; document.getElementById('c-pay').value = c.pay || ''; document.getElementById('modal-card').style.display = 'flex'; }
+        function saveCard() { const id = document.getElementById('c-id').value; const name = document.getElementById('c-name').value.trim(); const bank = document.getElementById('c-bank').value.trim(); const num = document.getElementById('c-num').value.trim(); const realDebt = parseFloat(document.getElementById('c-real-debt').value) || 0; const realPay = parseFloat(document.getElementById('c-real-pay').value) || 0; const cut = parseInt(document.getElementById('c-cut').value) || ''; const pay = parseInt(document.getElementById('c-pay').value) || ''; if(!name) return alert('Ingresa nombre'); if(id) { const c = state.cards.find(x => x.id === Number(id)); if(c) { c.name = name; c.bank = bank; c.num = num; c.realDebt = realDebt; c.realPay = realPay; c.cut = cut; c.pay = pay; } } else { state.cards.push({ id: Date.now(), name, bank, num, realDebt, realPay, cut, pay }); } save(); closeModal('modal-card'); }
 
         // --- FUNCIONES CRUD COMPRAS / DEUDAS ---
         function openExpModal(cardId) { 
@@ -608,12 +654,13 @@
             document.getElementById('e-status').value = 'new';
             document.getElementById('e-status').className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
             document.getElementById('e-amount').value = ''; 
+            document.getElementById('e-msi-mode').value = 'total';
             document.getElementById('e-date').value = getTodayString(); 
             document.getElementById('e-type').value = 'contado'; 
             document.getElementById('e-months').value = '1'; 
+            document.getElementById('e-current-month').value = '1'; 
             document.getElementById('e-int').value = '0'; 
-            document.getElementById('msi-div').classList.add('hidden'); 
-            updateSimMonthly();
+            toggleMsiDiv('contado');
             document.getElementById('modal-exp').style.display = 'flex'; 
         }
 
@@ -628,28 +675,32 @@
             document.getElementById('e-status').value = e.status || 'new';
             
             const statusSelect = document.getElementById('e-status');
-            if(e.status === 'reflected') {
-                statusSelect.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
+            if(e.status === 'reflected') statusSelect.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
+            else statusSelect.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
+
+            const mode = e.msiMode || 'total';
+            document.getElementById('e-msi-mode').value = mode;
+            
+            // Si originalmente capturó la mensualidad, mostramos la matemática inversa para no confundirlo
+            if (mode === 'monthly' && e.type === 'msi') {
+                document.getElementById('e-amount').value = (e.amount / (e.months || 1)).toFixed(2);
             } else {
-                statusSelect.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
+                document.getElementById('e-amount').value = e.amount;
             }
 
-            document.getElementById('e-amount').value = e.amount; 
             document.getElementById('e-date').value = e.date || getTodayString(); 
             document.getElementById('e-type').value = e.type || 'contado'; 
             document.getElementById('e-months').value = e.months || 1; 
+            document.getElementById('e-current-month').value = e.currentMonth || 1; 
             document.getElementById('e-int').value = e.interest || 0; 
-            document.getElementById('msi-div').classList.toggle('hidden', e.type !== 'msi'); 
-            updateSimMonthly();
+            
+            toggleMsiDiv(e.type || 'contado');
             document.getElementById('modal-exp').style.display = 'flex'; 
         }
 
         document.getElementById('e-status').addEventListener('change', function() {
-            if(this.value === 'reflected') {
-                this.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
-            } else {
-                this.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
-            }
+            if(this.value === 'reflected') this.className = "w-full p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
+            else this.className = "w-full p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-semibold";
         });
 
         function saveExp() { 
@@ -658,19 +709,27 @@
             const desc = document.getElementById('e-desc').value.trim() || 'Concepto'; 
             const classification = document.getElementById('e-class').value;
             const status = document.getElementById('e-status').value;
-            const amount = parseFloat(document.getElementById('e-amount').value) || 0; 
+            
+            let amount = parseFloat(document.getElementById('e-amount').value) || 0; 
             const date = document.getElementById('e-date').value || getTodayString(); 
             const type = document.getElementById('e-type').value; 
+            const msiMode = document.getElementById('e-msi-mode').value;
             const months = parseInt(document.getElementById('e-months').value) || 1; 
+            const currentMonth = parseInt(document.getElementById('e-current-month').value) || 1; 
             const interest = parseFloat(document.getElementById('e-int').value) || 0; 
             
             if(amount <= 0) return alert('Ingresa monto válido'); 
             
+            // Si el usuario eligió ingresar "Mensualidad", multiplicamos internamente para guardar la base total
+            if (type === 'msi' && msiMode === 'monthly') {
+                amount = amount * months;
+            }
+
             if(id) { 
                 const exp = state.expenses.find(x => x.id === Number(id)); 
-                if(exp) { exp.desc = desc; exp.classification = classification; exp.status = status; exp.amount = amount; exp.date = date; exp.type = type; exp.months = months; exp.interest = interest; } 
+                if(exp) { exp.desc = desc; exp.classification = classification; exp.status = status; exp.amount = amount; exp.msiMode = msiMode; exp.date = date; exp.type = type; exp.months = months; exp.currentMonth = currentMonth; exp.interest = interest; } 
             } else { 
-                state.expenses.push({ id: Date.now(), cardId, desc, classification, status, amount, date, type, months, interest }); 
+                state.expenses.push({ id: Date.now(), cardId, desc, classification, status, amount, msiMode, date, type, months, currentMonth, interest }); 
             } 
             save(); closeModal('modal-exp'); 
         }
@@ -775,6 +834,7 @@
                     
                     if(silent) {
                         state = cloudData; 
+                        if(checkAndGenerateIncomes()) { saveToStorageOnly(); }
                         sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state));
                         render();
                     } else {
@@ -784,6 +844,7 @@
                             
                         if(confirm(msg)) { 
                             state = cloudData; 
+                            if(checkAndGenerateIncomes()) { saveToStorageOnly(); }
                             sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state));
                             render(); 
                         } else if (isJustLoggedIn) {
