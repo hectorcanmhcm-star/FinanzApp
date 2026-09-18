@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanzApp PRO</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4338ca">
     <title>FinanzApp PRO</title>
     
     <link rel="manifest" href="/FinanzApp/manifest.json">
 
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://apis.google.com">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
@@ -414,6 +412,38 @@
         </div>
     </div>
 
+    <!-- MODAL GASTO DÉBITO -->
+    <div id="modal-cash-exp" class="modal-bg">
+        <div class="modal-content space-y-4">
+            <h3 id="modal-cash-title" class="font-bold text-lg text-slate-800">Gasto en Débito/Efectivo</h3>
+            <input type="hidden" id="cx-id">
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-2">
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto</label>
+                    <input type="text" id="cx-desc" placeholder="Ej. Tacos, Gasolina..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 font-semibold">
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label>
+                    <input type="number" step="0.01" id="cx-amount" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-400 font-bold">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Se pagó de (Cuenta):</label>
+                    <select id="cx-account" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500"></select>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label>
+                    <input type="date" id="cx-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 text-xs">
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2 border-t border-gray-100">
+                <button onclick="saveCashExp()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white p-3 rounded-xl font-bold transition">Guardar Gasto</button>
+                <button onclick="closeModal('modal-cash-exp')" class="p-3 text-gray-400 hover:text-gray-600 font-medium">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL TARJETA DE CRÉDITO (Config) -->
     <div id="modal-card" class="modal-bg">
         <div class="modal-content space-y-4">
@@ -666,6 +696,7 @@
                 let totalCashAvailable = 0; const debitBalances = {};
                 state.debitAccounts.forEach(d => debitBalances[d.id] = 0);
                 
+                // Sumar solo ingresos CONFIRMADOS
                 state.incomes.forEach(i => { 
                     if (i.frequency === 'unique' && i.isConfirmed !== false) {
                         const t = i.targetId || 'general'; if(debitBalances[t] !== undefined) debitBalances[t] += parseFloat(i.amount||0); 
@@ -688,6 +719,7 @@
                 if(document.getElementById('val-incomes')) document.getElementById('val-incomes').innerText = fmt(totalIncomesSum);
                 if(document.getElementById('val-paid')) document.getElementById('val-paid').innerText = fmt(totalPaidToCC);
                 if(document.getElementById('val-available')) document.getElementById('val-available').innerText = fmt(totalCashAvailable);
+                if(document.getElementById('val-total-cards')) document.getElementById('val-total-cards').innerText = fmt(globalMonthReq);
                 if(document.getElementById('val-total-services')) document.getElementById('val-total-services').innerText = fmt(srvTotal);
                 if(document.getElementById('val-total-dom-debit')) document.getElementById('val-total-dom-debit').innerText = fmt(totalDomDebit);
                 if(document.getElementById('val-total-compromises')) document.getElementById('val-total-compromises').innerText = "-" + fmt(totalCompromises);
@@ -915,7 +947,40 @@
                         </div>`;
                     }).join('');
                 }
-                
+
+                // Incomes en su pestaña (Historial + Plantillas)
+                const divIncomes = document.getElementById('list-incomes');
+                if(divIncomes) {
+                    const sortedIncomes = [...state.incomes].sort((a,b) => {
+                        if (a.frequency !== 'unique' && b.frequency === 'unique') return -1;
+                        if (a.frequency === 'unique' && b.frequency !== 'unique') return 1;
+                        return new Date(b.date || a.createdAt) - new Date(a.date || b.createdAt);
+                    });
+                    
+                    divIncomes.innerHTML = sortedIncomes.length === 0 ? `<div class="p-6 text-center text-gray-400 text-xs italic">No hay ingresos registrados.</div>` : sortedIncomes.map(i => {
+                        const acc = state.debitAccounts.find(a => a.id == i.targetId) || {name: 'General'};
+                        
+                        if (i.frequency === 'unique') {
+                            const confirmBtn = i.isConfirmed === false ? `<button onclick="confirmIncome(${i.id})" class="text-emerald-600 bg-emerald-100 p-1.5 rounded hover:bg-emerald-200" title="Confirmar Pago"><i class="fas fa-check"></i></button>` : '';
+                            const statusBadge = i.isConfirmed === false ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 ml-1">⏳ Pendiente</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 ml-1">✓ Pagado</span>`;
+                            
+                            return `
+                            <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none ${i.isConfirmed === false ? 'bg-amber-50/30' : ''}">
+                                <div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-slate-700">${i.desc}</span>${statusBadge}</div><p class="text-[9px] text-gray-400"><i class="fas fa-wallet"></i> ${acc.name} • <i class="far fa-calendar-alt"></i> ${i.date}</p></div>
+                                <div class="flex items-center gap-2"><span class="font-bold ${i.isConfirmed===false ? 'text-gray-400' : 'text-emerald-600'} mr-2">+${fmt(i.amount)}</span>${confirmBtn}<button onclick="editIncome(${i.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
+                            </div>`
+                        } else {
+                            const freqTag = i.frequency === 'monthly' ? 'Mensual' : 'Quincenal';
+                            const daysTag = i.frequency === 'monthly' ? `Día ${i.day1}` : `Días ${i.day1} y ${i.day2}`;
+                            return `
+                            <div class="p-4 flex justify-between items-center text-xs border-b border-gray-50 last:border-none bg-indigo-50/30">
+                                <div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-indigo-900">${i.desc}</span><span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-indigo-100 text-indigo-700"><i class="fas fa-sync-alt"></i> Plantilla ${freqTag}</span></div><p class="text-[9px] text-indigo-400"><i class="fas fa-wallet"></i> ${acc.name} • Se paga: ${daysTag}</p></div>
+                                <div class="flex items-center gap-2"><span class="font-bold text-indigo-600 mr-2">+${fmt(i.amount)}</span><button onclick="editIncome(${i.id})" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button><button onclick="del('incomes', ${i.id})" class="text-rose-400 bg-rose-50 p-1.5 rounded"><i class="fas fa-trash"></i></button></div>
+                            </div>`
+                        }
+                    }).join('');
+                }
+
             } catch (err) { console.error("Error durante render:", err); }
         }
 
@@ -1096,7 +1161,18 @@
             save(); closeModal('modal-income'); 
         }
 
-        function del(type, id) { let keyId = type === 'debitAccounts' ? String(id) : Number(id); if(confirm('¿Seguro que deseas eliminar?')) { state[type] = state[type].filter(i => i.id !== keyId); if(type === 'cards') { state.expenses = state.expenses.filter(e => e.cardId !== keyId); state.payments = state.payments.filter(p => p.cardId !== keyId); state.domiciled = state.domiciled.filter(d=>d.sourceId === 'credit_'+keyId); } save(); } }
+        function del(type, id) { 
+            // ELIMINACIÓN UNIVERSAL SEGURA (Detecta String o Number)
+            if(confirm('¿Seguro que deseas eliminar?')) { 
+                state[type] = state[type].filter(i => String(i.id) !== String(id)); 
+                if(type === 'cards') { 
+                    state.expenses = state.expenses.filter(e => String(e.cardId) !== String(id)); 
+                    state.payments = state.payments.filter(p => String(p.cardId) !== String(id)); 
+                    state.domiciled = state.domiciled.filter(d => String(d.cardId) !== String(id) && d.sourceId !== 'credit_'+id); 
+                } 
+                save(); 
+            } 
+        }
 
         // --- MANEJO DE DRIVE ---
         function updateAuthUI(isLoggedIn) { document.getElementById('btn-login').classList.toggle('hidden', isLoggedIn); document.getElementById('btn-sync').classList.toggle('hidden', !isLoggedIn); document.getElementById('btn-pull').classList.toggle('hidden', !isLoggedIn); document.getElementById('btn-logout').classList.toggle('hidden', !isLoggedIn); const badge = document.getElementById('mode-badge'); if(isLoggedIn) { badge.innerText = 'Drive Seguro'; badge.className = 'text-[10px] bg-indigo-500 px-2 py-0.5 rounded-full shadow-sm font-bold'; } else { badge.innerText = 'Uso Local'; badge.className = 'text-[10px] bg-slate-500 px-2 py-0.5 rounded-full shadow-sm font-bold'; } }
@@ -1106,26 +1182,45 @@
         function gapiLoaded() { gapi.load('client', async () => { await gapi.client.init({ discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"] }); isGapiReady = true; checkExistingAuth(); }); }
         function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: (resp) => { if(resp.access_token) { localStorage.setItem('gdrive_token', resp.access_token); localStorage.setItem('gdrive_token_exp', Date.now() + (resp.expires_in * 1000)); updateAuthUI(true); startAutoSave(); loadFromDrive(false, true); } } }); isGisReady = true; checkExistingAuth(); }
         function handleAuthClick() { tokenClient.requestAccessToken({prompt: ''}); }
-        async function saveToDriveCore(silent = false) { try { const token = gapi.client.getToken()?.access_token; if(!token) return; const fileName = "finanzapp_cloud.json"; const response = await gapi.client.drive.files.list({ q: `name = '${fileName}' and trashed = false`, fields: 'files(id, name)' }); const file = response.result.files?.[0]; const metadata = { name: fileName, mimeType: 'application/json' }; const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'}); const fd = new FormData(); fd.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'})); fd.append('file', blob); await fetch(file ? `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: file ? 'PATCH' : 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd, keepalive: true }); if(!silent) alert("✓ Datos respaldados en tu cuenta de Google Drive."); } catch (err) { if(!silent) alert("Error al subir a Drive."); } }
+        async function saveToDriveCore(silent = false) { 
+            try { 
+                const token = gapi.client?.getToken()?.access_token; 
+                if(!token) { if(!silent){ alert("Tu sesión de Google caducó. Por favor presiona 'Conectar Drive' nuevamente."); updateAuthUI(false); } return; } 
+                const fileName = "finanzapp_cloud.json"; const response = await gapi.client.drive.files.list({ q: `name = '${fileName}' and trashed = false`, fields: 'files(id, name)' }); const file = response.result.files?.[0]; const metadata = { name: fileName, mimeType: 'application/json' }; const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'}); const fd = new FormData(); fd.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'})); fd.append('file', blob); 
+                const res = await fetch(file ? `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: file ? 'PATCH' : 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd, keepalive: true }); 
+                if (res.status === 401) { if(!silent){ alert("Tu sesión de Google expiró por seguridad. Vuelve a conectarte."); updateAuthUI(false); } return; }
+                if(!res.ok) throw new Error("API Error");
+                if(!silent) alert("✓ Datos respaldados en tu cuenta de Google Drive."); 
+            } catch (err) { if(!silent) alert("Error de red al intentar subir a Drive."); } 
+        }
         function saveToDriveBtn() { saveToDriveCore(false); }
-        async function loadFromDrive(silent = false, isJustLoggedIn = false) { try { const token = gapi.client.getToken()?.access_token; if(!token) return; const response = await gapi.client.drive.files.list({ q: "name = 'finanzapp_cloud.json' and trashed = false", fields: 'files(id, name)' }); const file = response.result.files?.[0]; if(file) { const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } }); const cloudData = await res.json(); if(silent) { state = migrateState(cloudData); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } else { let msg = isJustLoggedIn ? "Acabas de iniciar sesión y encontramos datos en tu nube. ¿Deseas descargarlos?\n\n(Si eliges Cancelar, se mantendrán los datos locales que tienes ahora en pantalla y podrás subirlos a tu Drive)." : "Se encontraron datos en la nube. ¿Deseas descargarlos y sobreescribir tu sesión actual?"; if(confirm(msg)) { state = migrateState(cloudData); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } else if (isJustLoggedIn) { sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); } } } else if(!silent) { alert("No se encontró ningún respaldo anterior en Drive. Usa 'Subir' para crear uno nuevo."); } } catch(err) {} }
+        async function loadFromDrive(silent = false, isJustLoggedIn = false) { 
+            try { 
+                const token = gapi.client?.getToken()?.access_token; 
+                if(!token) { if(!silent){ alert("Tu sesión de Google caducó. Por favor vuelve a Conectar Drive."); updateAuthUI(false); } return; } 
+                const response = await gapi.client.drive.files.list({ q: "name = 'finanzapp_cloud.json' and trashed = false", fields: 'files(id, name)' }); const file = response.result.files?.[0]; 
+                if(file) { 
+                    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, { headers: { 'Authorization': `Bearer ${token}` } }); 
+                    if (res.status === 401) { if(!silent){ alert("Tu sesión de Google expiró por seguridad. Vuelve a conectarte."); updateAuthUI(false); } return; }
+                    const cloudData = await res.json(); 
+                    if(silent) { state = migrateState(cloudData); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } 
+                    else { 
+                        let msg = isJustLoggedIn ? "Encontramos datos en tu nube. ¿Deseas descargarlos?\n\n(Si eliges Cancelar, se mantendrán los datos locales que tienes en pantalla)." : "Se encontraron datos en la nube. ¿Deseas descargarlos y sobreescribir tu sesión actual?"; 
+                        if(confirm(msg)) { state = migrateState(cloudData); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } else if (isJustLoggedIn) { sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); } 
+                    } 
+                } else if(!silent) { alert("No se encontró ningún respaldo anterior en Drive. Usa 'Subir' para crear uno nuevo."); } 
+            } catch(err) {} 
+        }
         async function handleSignOut() { if(confirm("¿Cerrar sesión?\n\nSe respaldará tu información en la nube y volverás a tu perfil de Uso Local.")) { stopAutoSave(); await saveToDriveCore(true); const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token, () => {}); gapi.client.setToken(''); } localStorage.removeItem('gdrive_token'); localStorage.removeItem('gdrive_token_exp'); sessionStorage.removeItem('finanz_data_cloud_session'); updateAuthUI(false); loadLocalProfile(); } }
 
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && gapi.client?.getToken()?.access_token) saveToDriveCore(true); });
         
+        // ¡ARRANQUE INMEDIATO OFFLINE-FIRST!
+        // Al colocar init() aquí en lugar de window.onload, la app lee la memoria local al instante.
+        // Google Drive cargará en segundo plano cuando el celular recupere la señal.
         init();
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
-        <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/FinanzApp/sw.js')
-                    .then(reg => console.log('Escudo Offline Activado'))
-                    .catch(err => console.log('Fallo en el escudo', err));
-            });
-        }
-        </script>
-    
 </body>
 </html>
