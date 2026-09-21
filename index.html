@@ -6,7 +6,6 @@
     <meta name="theme-color" content="#4338ca">
     <title>FinanzApp PRO</title>
     
-    <!-- ENLACE PWA CORREGIDO -->
     <link rel="manifest" href="/FinanzApp/manifest.json">
 
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
@@ -26,7 +25,6 @@
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
         
-        /* Estilos para el scroll en la Máquina del Tiempo */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -536,6 +534,20 @@
         </div>
     </div>
 
+    <!-- MODAL DE CIERRE DE SESIÓN PERSONALIZADO -->
+    <div id="modal-logout" class="modal-bg">
+        <div class="modal-content space-y-4">
+            <h3 class="font-bold text-lg text-slate-800"><i class="fas fa-sign-out-alt text-rose-500 mr-1"></i> Estás a punto de cerrar sesión</h3>
+            <p class="text-sm text-gray-600">Tienes cambios recientes en la app. ¿Quieres guardar tus datos en la nube antes de salir?</p>
+            
+            <div class="flex flex-col gap-2 pt-4 border-t border-gray-100">
+                <button onclick="executeSignOut(true)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition shadow-sm text-sm">Guardar datos y salir</button>
+                <button onclick="executeSignOut(false)" class="w-full bg-rose-500 hover:bg-rose-600 text-white p-3 rounded-xl font-bold transition shadow-sm text-sm">No guardar datos y salir</button>
+                <button onclick="closeModal('modal-logout')" class="w-full p-3 text-gray-500 hover:text-gray-700 font-bold text-sm">Cancelar / Regresar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL RESCATE (MÁQUINA DEL TIEMPO) -->
     <div id="modal-rescue" class="modal-bg">
         <div class="modal-content space-y-4">
@@ -554,7 +566,7 @@
     </div>
 
     <!-- BOTÓN FLOTANTE MODO RESCATE -->
-    <button onclick="openEmergencyRestore()" class="fixed top-24 right-4 bg-rose-600 text-white p-3 rounded-xl font-bold shadow-2xl z-50 border-2 border-white transition hover:scale-105">🆘 RESCATE</button>
+    <button onclick="openEmergencyRestore()" class="fixed top-24 right-4 bg-rose-600 text-white p-3 rounded-xl font-bold shadow-2xl z-50 border-2 border-white transition hover:scale-105 text-xs">🆘 RESCATE</button>
 
     <script>
         const CLIENT_ID = '764556873375-etu7k4dnc1o6uimg7kvai1m18v06s61i.apps.googleusercontent.com';
@@ -562,7 +574,8 @@
 
         let state = { cards: [], expenses: [], payments: [], incomes: [], debitAccounts: [], cashExpenses: [], services: [], domiciled: [] };
         let tokenClient; let isGapiReady = false; let isGisReady = false; let autoSaveInterval = null;
-        let hasUnsavedCloudChanges = false; // Bandera de cambios sin subir
+        let hasUnsavedCloudChanges = false; 
+        let lastCloudSaveTime = 0; // Temporizador para la regla de los 10 minutos
 
         function getTodayString() { return new Date().toISOString().split('T')[0]; }
         function getEmptyState() { return { cards: [], expenses: [], payments: [], incomes: [], debitAccounts: [], cashExpenses: [], services: [], domiciled: [] }; }
@@ -628,7 +641,7 @@
 
         function save() { 
             saveToStorageOnly(); 
-            hasUnsavedCloudChanges = true; // Avisamos que hay algo sin subir a la nube
+            hasUnsavedCloudChanges = true; 
             render(); 
         }
         
@@ -1191,7 +1204,6 @@
                      return;
                 }
 
-                // Mostrar hasta 100 versiones, de la más reciente a la más vieja
                 rescueRevisions = revs.slice(-100).reverse(); 
                 
                 let html = '';
@@ -1234,7 +1246,7 @@
                 
                 state = migrateState(oldData);
                 saveToStorageOnly();
-                hasUnsavedCloudChanges = true; // Forzar a que la suban
+                hasUnsavedCloudChanges = true; 
                 render();
                 closeModal('modal-rescue');
                 alert("¡DATOS RESTAURADOS EN PANTALLA! 🎉\n\nPresiona el botón verde de 'Subir' arriba a la derecha para guardar esta versión rescatada como la oficial en tu nube.");
@@ -1243,12 +1255,45 @@
             }
         }
 
+        // --- CIERRE DE SESIÓN PERSONALIZADO CON LÓGICA DE 10 MINUTOS ---
+        function handleSignOut() {
+            const timeSinceLastSave = Date.now() - lastCloudSaveTime;
+            const tenMinutes = 10 * 60 * 1000;
+            
+            // Solo pregunta si hay cambios Y pasaron más de 10 minutos desde la última subida
+            if (hasUnsavedCloudChanges && timeSinceLastSave > tenMinutes) {
+                document.getElementById('modal-logout').style.display = 'flex';
+            } else {
+                executeSignOut(false);
+            }
+        }
+
+        async function executeSignOut(shouldSave) {
+            closeModal('modal-logout');
+            stopAutoSave(); 
+            
+            if (shouldSave) {
+                document.getElementById('btn-logout').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                await saveToDriveCore(true); 
+            }
+            
+            const token = gapi.client.getToken(); 
+            if (token !== null) { google.accounts.oauth2.revoke(token.access_token, () => {}); gapi.client.setToken(''); } 
+            localStorage.removeItem('gdrive_token'); localStorage.removeItem('gdrive_token_exp'); sessionStorage.removeItem('finanz_data_cloud_session'); 
+            
+            updateAuthUI(false); 
+            document.getElementById('btn-logout').innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+            loadLocalProfile(); 
+        }
+
         // --- PROTECCIÓN CONTRA CIERRES (ALT+F4 / CERRAR PESTAÑA) ---
         window.addEventListener('beforeunload', (e) => {
-            // Si hay cambios sin subir Y el usuario tiene Drive conectado
-            if (hasUnsavedCloudChanges && gapi.client?.getToken()?.access_token) {
+            const timeSinceLastSave = Date.now() - lastCloudSaveTime;
+            const tenMinutes = 10 * 60 * 1000;
+            
+            if (hasUnsavedCloudChanges && gapi.client?.getToken()?.access_token && timeSinceLastSave > tenMinutes) {
                 e.preventDefault();
-                e.returnValue = 'Tienes cambios sin subir a la nube. ¿Seguro que quieres salir?'; // El navegador mostrará su propio mensaje de advertencia
+                e.returnValue = 'Vas a cerrar la página. ¿Quieres guardar tus datos?'; 
             }
         });
 
@@ -1270,7 +1315,8 @@
                 if (res.status === 401) { if(!silent){ alert("Tu sesión de Google expiró por seguridad. Vuelve a conectarte."); updateAuthUI(false); } return; }
                 if(!res.ok) throw new Error("API Error");
                 
-                hasUnsavedCloudChanges = false; // Quita la bandera de alerta porque ya se subió todo
+                hasUnsavedCloudChanges = false; 
+                lastCloudSaveTime = Date.now(); // Reiniciamos el temporizador de 10 minutos
 
                 if(!silent) alert("✓ Datos respaldados en tu cuenta de Google Drive."); 
             } catch (err) { if(!silent) alert("Error de red al intentar subir a Drive."); } 
@@ -1290,27 +1336,14 @@
                     if(silent) { state = migrateState(cloudData); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } 
                     else { 
                         let msg = isJustLoggedIn ? "Encontramos datos en tu nube. ¿Deseas descargarlos?\n\n(Si eliges Cancelar, se mantendrán los datos locales que tienes en pantalla)." : "Se encontraron datos en la nube. ¿Deseas descargarlos y sobreescribir tu sesión actual?"; 
-                        if(confirm(msg)) { state = migrateState(cloudData); hasUnsavedCloudChanges = false; if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } else if (isJustLoggedIn) { sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); } 
+                        if(confirm(msg)) { state = migrateState(cloudData); hasUnsavedCloudChanges = false; lastCloudSaveTime = Date.now(); if(checkAndGenerateIncomes()) saveToStorageOnly(); sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); render(); } else if (isJustLoggedIn) { sessionStorage.setItem('finanz_data_cloud_session', JSON.stringify(state)); } 
                     } 
                 } else if(!silent) { alert("No se encontró ningún respaldo anterior en Drive. Usa 'Subir' para crear uno nuevo."); } 
             } catch(err) {} 
         }
 
-        async function handleSignOut() { 
-            if(confirm("¿Cerrar sesión?\n\nSe respaldará automáticamente tu información actual en la nube y volverás a tu perfil de Uso Local.")) { 
-                stopAutoSave(); 
-                if (hasUnsavedCloudChanges) await saveToDriveCore(true); 
-                const token = gapi.client.getToken(); 
-                if (token !== null) { google.accounts.oauth2.revoke(token.access_token, () => {}); gapi.client.setToken(''); } 
-                localStorage.removeItem('gdrive_token'); localStorage.removeItem('gdrive_token_exp'); sessionStorage.removeItem('finanz_data_cloud_session'); 
-                updateAuthUI(false); 
-                loadLocalProfile(); 
-            } 
-        }
-
         // GUARDADO DE EMERGENCIA POR CAÍDAS Y CAMBIOS DE PESTAÑA
         document.addEventListener('visibilitychange', () => { 
-            // Si el celular se bloquea o cambias de app, intenta guardar en la nube
             if (document.visibilityState === 'hidden' && gapi.client?.getToken()?.access_token && hasUnsavedCloudChanges) {
                 saveToDriveCore(true); 
             }
