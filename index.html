@@ -54,10 +54,10 @@
         <!-- ================= INICIO (DASHBOARD) ================= -->
         <section id="sec-dashboard" class="space-y-4">
             
-            <!-- ALERTAS DE PRÓXIMOS PAGOS -->
-            <div class="grid grid-cols-2 gap-3">
+            <!-- ALERTAS DE PRÓXIMOS PAGOS (AHORA SON 3 DINÁMICOS) -->
+            <div id="alerts-container" class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <!-- Próxima TC -->
-                <div class="bg-gradient-to-br from-rose-500 to-rose-600 p-3.5 rounded-2xl text-white shadow-md flex flex-col justify-between relative overflow-hidden">
+                <div id="alert-tc" class="hidden bg-gradient-to-br from-rose-500 to-rose-600 p-3.5 rounded-2xl text-white shadow-md flex flex-col justify-between relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 opacity-10 text-5xl"><i class="fas fa-credit-card"></i></div>
                     <div class="flex items-center gap-1 mb-3 opacity-90"><i class="fas fa-exclamation-circle text-[10px]"></i><span class="text-[9px] font-bold uppercase tracking-wider">Próxima Tarjeta</span></div>
                     <div class="z-10">
@@ -70,14 +70,27 @@
                 </div>
 
                 <!-- Próximo Servicio -->
-                <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-3.5 rounded-2xl text-white shadow-md flex flex-col justify-between relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 opacity-10 text-5xl"><i class="fas fa-file-invoice-dollar"></i></div>
-                    <div class="flex items-center gap-1 mb-3 opacity-90"><i class="fas fa-bolt text-[10px]"></i><span class="text-[9px] font-bold uppercase tracking-wider">Próximo Recibo</span></div>
+                <div id="alert-srv" class="hidden bg-gradient-to-br from-amber-500 to-amber-600 p-3.5 rounded-2xl text-white shadow-md flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 opacity-10 text-5xl"><i class="fas fa-bolt"></i></div>
+                    <div class="flex items-center gap-1 mb-3 opacity-90"><i class="fas fa-home text-[10px]"></i><span class="text-[9px] font-bold uppercase tracking-wider">Próx. Servicio</span></div>
                     <div class="z-10">
                         <h3 id="alert-srv-name" class="font-bold text-xs leading-tight mb-1 truncate">--</h3>
                         <div class="flex justify-between items-end">
                             <span id="alert-srv-amount" class="font-black text-lg leading-none">$0.00</span>
                             <span id="alert-srv-date" class="text-[9px] font-semibold bg-white/20 px-1.5 py-0.5 rounded shadow-sm">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Próximo Domiciliado -->
+                <div id="alert-dom" class="hidden bg-gradient-to-br from-blue-500 to-blue-600 p-3.5 rounded-2xl text-white shadow-md flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 opacity-10 text-5xl"><i class="fas fa-sync-alt"></i></div>
+                    <div class="flex items-center gap-1 mb-3 opacity-90"><i class="fas fa-calendar-check text-[10px]"></i><span class="text-[9px] font-bold uppercase tracking-wider">Próx. Domiciliado</span></div>
+                    <div class="z-10">
+                        <h3 id="alert-dom-name" class="font-bold text-xs leading-tight mb-1 truncate">--</h3>
+                        <div class="flex justify-between items-end">
+                            <span id="alert-dom-amount" class="font-black text-lg leading-none">$0.00</span>
+                            <span id="alert-dom-date" class="text-[9px] font-semibold bg-white/20 px-1.5 py-0.5 rounded shadow-sm">--</span>
                         </div>
                     </div>
                 </div>
@@ -774,7 +787,6 @@
                     const cardPaid = myPays.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                     const cardCurrentDebt = Math.max(0, cardGrossDebt - cardPaid);
                     
-                    // Lógica para descontar pagos primero a la deuda de contado y luego a los meses
                     let netDebtContado = Math.max(0, cardDebtContado - cardPaid);
                     let netDebtMSI = cardDebtMSI;
                     if (cardPaid > cardDebtContado) {
@@ -793,36 +805,55 @@
 
                 enrichedCards.sort((a,b) => a.daysUntil - b.daysUntil);
 
-                if(document.getElementById('alert-tc-name')) {
+                // --- LLENAR 3 ALERTAS DINÁMICAMENTE ---
+                const alertContainer = document.getElementById('alerts-container');
+                let activeAlerts = 0;
+
+                const alertTc = document.getElementById('alert-tc');
+                if(alertTc) {
                     if (enrichedCards.length > 0) {
                         const nextC = enrichedCards[0];
                         document.getElementById('alert-tc-name').innerText = nextC.name;
                         document.getElementById('alert-tc-amount').innerText = fmt(nextC.cardMonthReq);
                         document.getElementById('alert-tc-date').innerText = nextC.dates.payStr;
+                        alertTc.classList.remove('hidden');
+                        activeAlerts++;
                     } else {
-                        document.getElementById('alert-tc-name').innerText = "Sin Tarjetas";
-                        document.getElementById('alert-tc-amount').innerText = "$0.00";
-                        document.getElementById('alert-tc-date').innerText = "--";
+                        alertTc.classList.add('hidden');
                     }
                 }
 
-                let upcomingBills = [];
-                state.services.forEach(s => { if(s.day) upcomingBills.push({name: s.name, amount: s.amount, day: s.day, daysUntil: getDaysUntil(s.day)}); });
-                state.domiciled.forEach(d => { if(d.active && d.day) upcomingBills.push({name: d.name, amount: d.amount, day: d.day, daysUntil: getDaysUntil(d.day)}); });
-                upcomingBills.sort((a,b) => a.daysUntil - b.daysUntil);
-
-                if(document.getElementById('alert-srv-name')) {
-                    if (upcomingBills.length > 0) {
-                        const nextB = upcomingBills[0];
-                        document.getElementById('alert-srv-name').innerText = nextB.name;
-                        document.getElementById('alert-srv-amount').innerText = fmt(nextB.amount);
-                        document.getElementById('alert-srv-date').innerText = "Día " + nextB.day;
-                    } else {
-                        document.getElementById('alert-srv-name').innerText = "Sin cobros con fecha";
-                        document.getElementById('alert-srv-amount').innerText = "$0.00";
-                        document.getElementById('alert-srv-date').innerText = "--";
-                    }
+                let srvList = []; state.services.forEach(s => { if(s.day) srvList.push({name: s.name, amount: s.amount, day: s.day, daysUntil: getDaysUntil(s.day)}); });
+                srvList.sort((a,b) => a.daysUntil - b.daysUntil);
+                const alertSrv = document.getElementById('alert-srv');
+                if(alertSrv) {
+                    if (srvList.length > 0) {
+                        document.getElementById('alert-srv-name').innerText = srvList[0].name;
+                        document.getElementById('alert-srv-amount').innerText = fmt(srvList[0].amount);
+                        document.getElementById('alert-srv-date').innerText = "Día " + srvList[0].day;
+                        alertSrv.classList.remove('hidden');
+                        activeAlerts++;
+                    } else { alertSrv.classList.add('hidden'); }
                 }
+
+                let domList = []; state.domiciled.forEach(d => { if(d.active && d.day) domList.push({name: d.name, amount: d.amount, day: d.day, daysUntil: getDaysUntil(d.day)}); });
+                domList.sort((a,b) => a.daysUntil - b.daysUntil);
+                const alertDom = document.getElementById('alert-dom');
+                if(alertDom) {
+                    if (domList.length > 0) {
+                        document.getElementById('alert-dom-name').innerText = domList[0].name;
+                        document.getElementById('alert-dom-amount').innerText = fmt(domList[0].amount);
+                        document.getElementById('alert-dom-date').innerText = "Día " + domList[0].day;
+                        alertDom.classList.remove('hidden');
+                        activeAlerts++;
+                    } else { alertDom.classList.add('hidden'); }
+                }
+
+                // Ajustar grid según cuántas alertas están activas
+                if(alertContainer) {
+                    alertContainer.className = `grid gap-3 ${activeAlerts === 1 ? 'grid-cols-1 md:grid-cols-2' : (activeAlerts === 2 ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3')}`;
+                }
+
 
                 let totalCashAvailable = 0; const debitBalances = {};
                 state.debitAccounts.forEach(d => debitBalances[d.id] = 0);
@@ -1004,7 +1035,6 @@
                                             const statusBadge = e.status === 'reflected' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-emerald-100 text-emerald-700 font-bold">Reflejada</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-amber-100 text-amber-700 font-bold">Nueva</span>`;
                                             const classBadge = e.classification === 'deuda' ? `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-slate-200 text-slate-600 font-bold">Deuda Ant.</span>` : `<span class="text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-100 text-blue-700 font-bold">Compra</span>`;
                                             
-                                            // NUEVO FORMATO DE SUBTOTAL A MESES
                                             const totalConInt = (parseFloat(e.amount) || 0) * (1 + ((parseFloat(e.interest) || 0) / 100));
                                             const m = parseInt(e.months) || 1; const curr = parseInt(e.currentMonth) || 1;
                                             const mReq = totalConInt / m;
