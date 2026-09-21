@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#4338ca">
     <title>FinanzApp PRO</title>
     
+    <!-- ENLACE PWA CORREGIDO -->
     <link rel="manifest" href="/FinanzApp/manifest.json">
 
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
@@ -33,7 +34,7 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <h1 class="font-bold text-lg flex items-center gap-2">
                 <i class="fas fa-wallet text-indigo-200"></i> FinanzApp 
-                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">VERSIÓN 22</span>
+                <span id="mode-badge" class="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full shadow-sm font-bold">PWA FINAL</span>
             </h1>
             <div class="flex gap-2 items-center flex-wrap">
                 <button id="btn-login" onclick="handleAuthClick()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full font-semibold transition">Conectar Drive</button>
@@ -83,9 +84,7 @@
                 <div class="mt-5 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/50 space-y-2">
                     <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-700/50 pb-2">Presupuesto General del Mes</h3>
                     
-                    <div id="budget-cards-container" class="space-y-1 pb-1">
-                        <!-- Aquí se insertará mágicamente el desglose de tarjetas por mes -->
-                    </div>
+                    <div id="budget-cards-container" class="space-y-1 pb-1"></div>
 
                     <div class="flex justify-between items-center text-xs pt-1">
                         <span class="text-slate-300"><i class="fas fa-bolt w-4"></i> Pago Servicios:</span>
@@ -130,9 +129,7 @@
             <!-- SERVICIOS -->
             <details class="bg-white rounded-2xl shadow-sm border border-gray-200 group" open>
                 <summary class="p-4 flex justify-between items-center cursor-pointer select-none">
-                    <div>
-                        <h2 class="font-bold text-slate-800"><i class="fas fa-bolt text-amber-500 mr-1"></i> Servicios del Hogar</h2>
-                    </div>
+                    <div><h2 class="font-bold text-slate-800"><i class="fas fa-bolt text-amber-500 mr-1"></i> Servicios del Hogar</h2></div>
                     <div class="flex items-center gap-3">
                         <button onclick="openServiceModal()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold transition">Nuevo</button>
                         <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
@@ -181,14 +178,12 @@
         <section id="sec-incomes" class="hidden space-y-4">
             <h2 class="font-bold text-lg text-slate-800">Dinero y Cuentas de Débito</h2>
             
-            <!-- TARJETAS DE DEBITO -->
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-sm font-bold text-slate-600 uppercase tracking-wide">Mis Cuentas</h3>
                 <button onclick="openDebitModal()" class="bg-indigo-200 text-indigo-800 hover:bg-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">Nueva Cuenta</button>
             </div>
             <div class="grid grid-cols-2 gap-3 mb-6" id="list-debit-accounts"></div>
 
-            <!-- GASTOS E INGRESOS EN DÉBITO -->
             <details class="bg-white rounded-2xl shadow-sm border border-gray-200 group" open>
                 <summary class="p-4 flex justify-between items-center cursor-pointer select-none border-b border-gray-100">
                     <h2 class="font-bold text-slate-700 text-sm"><i class="fas fa-exchange-alt text-blue-500 mr-1"></i> Movimientos (Débito/Efectivo)</h2>
@@ -408,38 +403,6 @@
             <div class="flex gap-2 pt-2 border-t border-gray-100">
                 <button onclick="saveExp()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl font-bold transition">Guardar Movimiento</button>
                 <button onclick="closeModal('modal-exp')" class="p-3 text-gray-400 hover:text-gray-600 font-medium">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL GASTO DÉBITO -->
-    <div id="modal-cash-exp" class="modal-bg">
-        <div class="modal-content space-y-4">
-            <h3 id="modal-cash-title" class="font-bold text-lg text-slate-800">Gasto en Débito/Efectivo</h3>
-            <input type="hidden" id="cx-id">
-            <div class="grid grid-cols-3 gap-3">
-                <div class="col-span-2">
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Concepto</label>
-                    <input type="text" id="cx-desc" placeholder="Ej. Tacos, Gasolina..." class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 font-semibold">
-                </div>
-                <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Monto ($)</label>
-                    <input type="number" step="0.01" id="cx-amount" placeholder="0.00" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-400 font-bold">
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Se pagó de (Cuenta):</label>
-                    <select id="cx-account" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500"></select>
-                </div>
-                <div>
-                    <label class="text-[11px] font-semibold text-gray-500 block mb-1">Fecha</label>
-                    <input type="date" id="cx-date" class="w-full p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-rose-500 text-xs">
-                </div>
-            </div>
-            <div class="flex gap-2 pt-2 border-t border-gray-100">
-                <button onclick="saveCashExp()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white p-3 rounded-xl font-bold transition">Guardar Gasto</button>
-                <button onclick="closeModal('modal-cash-exp')" class="p-3 text-gray-400 hover:text-gray-600 font-medium">Cancelar</button>
             </div>
         </div>
     </div>
@@ -719,7 +682,6 @@
                 if(document.getElementById('val-incomes')) document.getElementById('val-incomes').innerText = fmt(totalIncomesSum);
                 if(document.getElementById('val-paid')) document.getElementById('val-paid').innerText = fmt(totalPaidToCC);
                 if(document.getElementById('val-available')) document.getElementById('val-available').innerText = fmt(totalCashAvailable);
-                if(document.getElementById('val-total-cards')) document.getElementById('val-total-cards').innerText = fmt(globalMonthReq);
                 if(document.getElementById('val-total-services')) document.getElementById('val-total-services').innerText = fmt(srvTotal);
                 if(document.getElementById('val-total-dom-debit')) document.getElementById('val-total-dom-debit').innerText = fmt(totalDomDebit);
                 if(document.getElementById('val-total-compromises')) document.getElementById('val-total-compromises').innerText = "-" + fmt(totalCompromises);
@@ -1162,7 +1124,6 @@
         }
 
         function del(type, id) { 
-            // ELIMINACIÓN UNIVERSAL SEGURA (Detecta String o Number)
             if(confirm('¿Seguro que deseas eliminar?')) { 
                 state[type] = state[type].filter(i => String(i.id) !== String(id)); 
                 if(type === 'cards') { 
@@ -1215,12 +1176,20 @@
 
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && gapi.client?.getToken()?.access_token) saveToDriveCore(true); });
         
-        // ¡ARRANQUE INMEDIATO OFFLINE-FIRST!
-        // Al colocar init() aquí en lugar de window.onload, la app lee la memoria local al instante.
-        // Google Drive cargará en segundo plano cuando el celular recupere la señal.
         init();
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    
+    <!-- REGISTRO DEL ESCUDO OFFLINE PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/FinanzApp/sw.js')
+                    .then(reg => console.log('Escudo Offline Activado'))
+                    .catch(err => console.log('Fallo en el escudo', err));
+            });
+        }
+    </script>
 </body>
 </html>
